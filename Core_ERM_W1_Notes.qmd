@@ -1,0 +1,271 @@
+---
+title: "Core_ERM_W1_Notes"
+author: "Er1kKa"
+format: html
+editor: visual
+---
+
+# Week 1
+
+## Video 1: Basics
+
+```{r}
+# comments
+
+
+# assignment operator <-
+
+x <- 3 # use <- to assign value
+        # read as "x gets 3"
+
+y <- 2 * x # we need to use * for multiplication, implied multiplication does not work
+
+y <- exp(1)
+y <- 2^8
+
+
+# data types
+
+print(typeof(x))
+
+x <- 3L
+print(typeof(x))
+
+
+# log operators
+
+# distinguish == / identical() or all.equal() which uses near equality
+
+all.equal(x, y)
+
+```
+
+## Exercise 1
+
+1.  Why does this code throw an error? Try to fix it.
+
+```         
+x <- 3; x > 2 & < 9
+```
+
+```{r}
+x <- 3
+(x > 2) & (x < 9)
+```
+
+2.  Does `(NA & TRUE)` equal `(NA | TRUE)`? Explain.
+
+3.  Does `(Inf - Inf)` equal `(Inf - 1)`? Explain.
+
+4.  Run the following. What happens? [(further reading)](https://www.econometrics.blog/post/street-fighting-numerical-analysis-part-1/)
+
+``` r
+y <- (1 - 0.8); z <- 0.2
+y == z; y < z; all.equal(y, z); identical(y, z)
+```
+
+```{r}
+y <- (1 - 0.8); z <- 0.2
+y == z; y < z; all.equal(y, z); identical(y, z)
+```
+
+5.  Why do I use double quotes here?
+
+```         
+important_message <- "The harder you try, the more you'll learn."
+```
+
+## Video 2: Atomic Vectors
+
+Clear variables in the environment
+
+```{r}
+rm(list = ls())
+```
+
+Atomic Vectors: Basics
+
+```{r}
+x <- c(1, 2, 3, 5, 8) # index starts from 1 in R!!!!
+y <- 23:59
+x
+y
+length(x)
+typeof(x)
+```
+
+Subsetting
+
+```{r}
+x[c(1, 3, 5)] # index using another atomic vector
+x[c(-1, -4)] # negative indices remove elements
+x[c(TRUE, FALSE, FALSE, FALSE, TRUE)] # logic vector as indices
+x[6] # out of range index gets NA
+```
+
+Nearly all R functions are vectorised
+
+```{r}
+x <- (-2:2)
+y <- c(1, 2, 3, 5, 8)
+x^y
+x + y
+sum(x)
+prod(y)
+```
+
+Even relational/logical operators are vectorised
+
+```{r}
+z <- c(TRUE, TRUE, FALSE)
+w <- c(FALSE, FALSE, FALSE)
+z & w
+any(x > y)
+all(x > y)
+```
+
+Recycling: R allows for operations with vectors of different lengths
+
+-   but this is dangerous! only use recycling when having "scalar with vectors" operations
+
+```{r}
+a <- c(1, 22)
+x + a
+x * 2
+
+```
+
+Replacing elements of a vector
+
+```{r}
+x[2] <- 5
+x
+```
+
+Naming/Renaming elements of a vector:
+
+```{r}
+x <- c("first" = 1, "second" = 2, "third" = 256)
+x["second"]
+names(x)[2] <- "no_name"
+x
+```
+
+Set operations
+
+```{r}
+union(x, y)
+x %in% y
+```
+
+Coercion
+
+```{r}
+x <- c(1, TRUE, "3")
+x
+as.double(x)
+```
+
+## Video 3: Functions and Control Flow
+
+`\()` is shorthand for `function()`
+
+```{r}
+# define a function
+raw_moment <- \(x, k) {
+  mean(x^k)
+}
+raw_moment(x = 1, k = 2)
+```
+
+Supply any number of extra arguments
+
+```{r}
+raw_moment <- function(x, k, ...) {
+  mean(x^k, ...)
+}
+raw_moment(c(1, 2, NA), 2, na.rm = TRUE)
+```
+
+Scope: we also distinguish between local and global variables in R
+
+`if()` statements
+
+```{r}
+if (3 > 5) {
+  print("nonsense")
+}
+```
+
+Early returns
+
+```{r}
+square_root <- \(x) {
+  if (x < 0) {
+    return("number smaller than 0")
+  }
+  sqrt(x)
+}
+square_root(-1)
+```
+
+If-else
+
+```{r}
+say_hi <- function(time) {
+  if (time > 1900) {
+    print("good evening")
+  } else {
+    print("good day")
+  }
+}
+say_hi(1200)
+```
+
+if-else if-else
+
+```{r}
+say_hi <- function(time) {
+  if (time > 1900) {
+    print("good evening")
+  } else if (time < 1000) {
+    print("good morning")
+  } else {
+    print("good day")
+  }
+}
+say_hi(0900)
+```
+
+Lookup tables
+
+`if ()` trees are best for *running different code* in each branch; lookup tables are best for *assigning different values* in each branch.
+
+```{r}
+get_grades <- \(name) {
+  grades <- c("Yangyang" = 100, "Xiaotian" = 0, "Changzhe" = 100)
+  grades[name]
+}
+get_grades("Xiaotian")
+```
+
+## Video 4: Iteration
+
+`for()` loop
+
+```{r}
+for (i in c(1, 2, 3, 999)) {
+  print(i^2)
+}
+```
+
+```{r}
+empty_function <- \() {
+  for (i in 1:3) {
+    print(i^2)
+  }
+}
+empty_function()
+```
+
+`while` loop
