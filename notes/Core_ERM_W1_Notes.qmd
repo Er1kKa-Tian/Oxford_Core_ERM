@@ -581,23 +581,215 @@ twoTruths |>
   summarise(correct_rate = mean(correct))
 ```
 
-## Lakisha
-
-```{r}
-# library and read
-library(tidyverse)
-bm <- read_csv('https://ditraglia.com/data/lakisha_aer.csv')
-```
-
-```{r}
-bm
-```
-
 # Week 1 Part 3
 
 ## `ggplot2`
 
-Install and load all tidyverse packages
+Load all tidyverse packages and sample dataset
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(gapminder)
+
+gapminder_2007 <- gapminder |>
+  filter(year == 2007)
+```
+
+Basic scattplot
+
+```{r}
+ggplot(data = gapminder_2007,
+       mapping = aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+```
+
+Another method: use \|\>
+
+```{r}
+gapminder_2007 |>
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+```
+
+Log scale
+
+```{r}
+gapminder_2007 |>
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() +
+  scale_x_log10()
+```
+
+We can update the plot step by step:
+
+```{r}
+myplot <- gapminder_2007 |>
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+
+myplot +
+  scale_x_log10()
+```
+
+Add titles and axis labels
+
+```{r}
+myplot +
+  labs(title = "Title",
+       substitle = "Subtitle",
+       caption = "Caption") +
+  xlab("GDP / Capita") +
+  ylab("Life Expectancy (years)")
+```
+
+-   **`ggplot2` Syntax Basics**
+
+    -   Combine **data** with **aesthetic mapping** and **geom**
+
+    -   `mapping = aes(x = gdpPerCap, y = lifeExp)`
+
+        -   `aes` is short for **aesthetic**
+
+        -   maps `gdpPerCap` to the x-coordinate
+
+        -   maps `lifeExp` to the y-coordinate
+
+    -   `geom_point()` is a *geometric object*, **geom** for short
+
+        -   Uses the mapping to create a scatterplot
+
+Aesthetics
+
+```{r}
+gapminder_2007 |>
+  ggplot(aes(x = gdpPercap, y = lifeExp,
+             color = continent,
+             size = pop)) +
+  geom_point() +
+  scale_x_log10()
+```
+
+Faceting: plots for multiple subsets
+
+```{r}
+gapminder |>
+  filter(year %in% c(1952, 1972, 1992)) |> # equivalent to year == 1952 | year == 1972 | year == 1992
+  ggplot(aes(x = gdpPercap, y = lifeExp,
+             colour = continent,
+             size = pop)) +
+  geom_point() +
+  scale_x_log10() +
+  facet_wrap(~ year) # facet wrt year
+```
+
+Plot summarised data
+
+```{r}
+gapminder |>
+  mutate(popMil = pop / 1000000) |>
+  group_by(year, continent) |>
+  summarise(totalPopMil = sum(popMil)) |>
+  ggplot(aes(x = year, y = totalPopMil,
+             color = continent)) +
+  geom_line() +
+  ylab("Total Population (Millions)")
+```
+
+Histogram
+
+```{r}
+gapminder_2007 |>
+  ggplot(aes(x = lifeExp)) +
+  geom_histogram(bandwidth = 1)
+```
+
+Boxplot
+
+-   **Whiskers**: max and min; **Box**: middle 50% of data
+
+-   **Lines**: 25th percentile, median, 75th percentile
+
+-   **Dots**: observations >(1.5×IQR)>(1.5×IQR) from box
+
+```{r}
+gapminder_2007 |>
+  ggplot(aes(y = lifeExp)) +
+  geom_boxplot()
+```
+
+Multiple Boxplots
+
+```{r}
+gapminder_2007 |>
+  ggplot(aes(x = continent, y = lifeExp)) +
+  geom_boxplot()
+```
+
+Bar plots
+
+```{r}
+gapminder_2007_byContinent <- gapminder_2007 |>
+  group_by(continent) |>
+  summarise(meanLifeExp = mean(lifeExp))
+
+gapminder_2007_byContinent |>
+  ggplot(aes(x = continent, y = meanLifeExp)) +
+  geom_col()
+```
+
+Rotated bar plot and set theme
+
+```{r}
+gapminder_2007_byContinent |>
+  ggplot(aes(x = continent, y = meanLifeExp)) +
+  geom_col() +
+  coord_flip() +
+  theme_bw()
+```
+
+Better than bar charts — Cleveland Dot Charts
+
+```{r}
+gapminder_2007_byContinent |>
+  ggplot(aes(x = meanLifeExp, y = continent)) +
+  geom_point() +
+  theme_bw()
+```
+
+Sorting
+
+```{r}
+gapminder_2007_byContinent |>
+  mutate(continent_ordered = fct_reorder(continent, meanLifeExp)) |>
+  ggplot(aes(x = meanLifeExp, y = continent_ordered)) +
+  geom_point() +
+  theme_bw()
+```
+
+A complicated version of dot chart
+
+```{r}
+plot_fancy <- gapminder |>
+  filter(year %in% c(1987, 2007)) |>
+  mutate(year = factor(year)) |>
+  group_by(continent, year) |>
+  summarise(meanLifeExp = mean(lifeExp)) |>
+  ggplot(aes(x = meanLifeExp, y = continent)) +
+  geom_line(aes(group = continent)) +
+  geom_point(aes(color = year)) +
+  xlab("Avg Life Expetency") +
+  ylab("Continent") +
+  theme_bw()
+```
+
+Exporting
+
+```{r}
+ggsave("plot_fancy.png", width = 8, height =6)
+```
+
+## Lecture 3   
 
 # Linter
 
