@@ -1,0 +1,82 @@
+---
+title: "Lakisha"
+format: html
+editor: visual
+---
+
+# Question 1
+
+1.  Read the introduction and conclusion of BM. Then write a short paragraph answering the following:
+
+    a.  What research question do BM try to answer?
+
+    b.  What data and methodology do they use to address the question?
+
+    c.  What do the authors consider to be their key findings?
+
+# Question 2
+
+```{r}
+library(tidyverse)
+bm <- read_csv('https://ditraglia.com/data/lakisha_aer.csv')
+```
+
+1.  Now that you have a rough idea of what the paper is about, it’s time to examine the dataset `bm`. Carry out the following steps:
+
+    a.  Display the tibble `bm`. How many rows and columns does it have?
+
+    b.  Display only the columns `sex`, `race` and `firstname` of `bm`. What information do these columns contain? How are `sex` and `race` encoded?
+
+    c.  Add two new columns to `bm`: `female` should take the value `TRUE` if `sex` is female, and `black` should take value `TRUE` if `race` is black.
+
+## Question 2a
+
+```{r}
+bm
+```
+
+4870 $\times$ 65
+
+## Question 1b
+
+```{r}
+bm |>
+  select(sex, race, firstname)
+
+typeof(bm[["sex"]])
+typeof(bm[["race"]])
+typeof(bm[["firstname"]])
+```
+
+Sex (char): f - female, m - male
+
+Race (char): w - white, b - black
+
+firstname (char): first name of the candidate
+
+## Question 1c
+
+```{r}
+bm <- 
+  bm |>
+    mutate(female = (sex == "f"),
+         black = (race == "b"))
+```
+
+# Question 3
+
+# Question 4
+
+Randomized controlled trials are all about *balance*: when the treatment is randomly assigned, the characteristics of the treatment and control groups will be the same on average. To answer the following parts you’ll need a few additional pieces of information. First, the variable `computerskills` takes on the value `1` if a given resume says that the applicant has computer skills. Second, the variables `education` and `yearsexp` indicate level of education and years experience, while `ofjobs` indicates the number of previous jobs listed on the resume. To analyse whether characteristics are balanced across treatment and control, compare summary statistics between applicants with white- and black-sounding names.
+
+a.  Is sex balanced across race? Use `dplyr` to answer this question. **Hint:** what happens if you apply the function `sum` to a vector of `TRUE` and `FALSE` values?
+
+b.  Are computer skills balanced across race? **Hint:** the summary statistic you’ll want to use is the *proportion* of individuals in each group with computer skills. If you have a vector of ones and zeros, there is a very easy way to compute this.
+
+c.  Are `education` and `ofjobs` balanced across race?
+
+d.  Compute the mean and standard deviation of `yearsexp` by race. Comment on your findings.
+
+e.  Why do we care if `sex`, `education`, `ofjobs`, `computerskills`, and `yearsexp` are balanced across race?
+
+f.  Is `computerskills` balanced across `sex`? What about `education`? What’s going on here? Is it a problem? **Hint:** re-read section II C of the paper.
