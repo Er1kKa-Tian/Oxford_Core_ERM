@@ -520,12 +520,97 @@ rm(list = ls()) # clear variables
 
 ```{r}
 library(dplyr) # library dplyr
+library(gapminder) # library gapminder
+
 ```
 
-Pipe operator
+Pipe operator `|>` passes the previous variable as the 1st argument of the next command.
+
+Dataset:
 
 ```{r}
+gapminder
+```
 
+dplyr basics:
+
+```{r}
+gapminder |>
+  select(country, continent, year, lifeExp) |>
+  mutate(popMillion = pop / 1000000) |> # by default, this returns a new tibble instead of changing the original one
+  filter(year == 2007) |>
+  arrange(desc(lifeExp)) |>
+  group_by(continent) |>
+  summarise(avgLifeExp = mean(lifeExp))
 ```
 
 ## Lecture 2
+
+```{r}
+rm(list = ls())
+```
+
+Quiz 1
+
+```{r}
+# load data
+gdp_growth <- c(2.5, 3.1, -1.2, 0.5, 4.0)
+
+# loop over elements in the vector
+for (number in gdp_growth) {
+  if (number < 0) {
+    print("Recession")
+  } else if (number > 0) {
+    print("Expansion")
+  }
+  else {
+    print("Neutral")
+  }
+}
+```
+
+Quiz 2
+
+```{r}
+# load data
+twoTruths <- read.csv("https://ditraglia.com/data/two-truths-and-a-lie-2025.csv")
+
+# quiz
+twoTruths |>
+  group_by(certainty) |>
+  summarise(correct_rate = mean(correct))
+```
+
+## Lakisha
+
+```{r}
+# library and read
+library(tidyverse)
+bm <- read_csv('https://ditraglia.com/data/lakisha_aer.csv')
+```
+
+```{r}
+bm
+```
+
+# Week 1 Part 3
+
+## `ggplot2`
+
+Install and load all tidyverse packages
+
+# Linter
+
+```{r}
+# clear all variables
+rm(list = ls())
+
+# library lintr
+library(lintr)
+
+# set style to tidyverse
+lintr::use_lintr(type = "tidyverse")
+
+# lint all files in the current project
+lintr::lint_dir("/Users/er1kka/Desktop/Er1kKa's Local Documents/Ox_Core_ERM")
+```
