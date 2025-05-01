@@ -80,3 +80,89 @@ d.  Compute the mean and standard deviation of `yearsexp` by race. Comment on yo
 e.  Why do we care if `sex`, `education`, `ofjobs`, `computerskills`, and `yearsexp` are balanced across race?
 
 f.  Is `computerskills` balanced across `sex`? What about `education`? What’s going on here? Is it a problem? **Hint:** re-read section II C of the paper.
+
+## Question 4a
+
+```{r}
+bm |>
+  group_by(race) |>
+  summarise(female_percent = sum(female) / n())
+```
+
+Almost balanced.
+
+## Question 4b
+
+```{r}
+bm |>
+  group_by(race) |>
+  summarise(computer_skill_percent = sum(computerskills) / n())
+```
+
+Again, nearly balanced.
+
+## Question 4c
+
+```{r}
+bm |>
+  group_by(race) |>
+  summarise(avg_eduction = mean(education),
+            avg_ofJobs = mean(ofjobs))
+```
+
+Almost balanced.
+
+## Question 4d
+
+```{r}
+bm |>
+  group_by(race) |>
+  summarise(mean_yearsexp = mean(yearsexp),
+            sd_yearsexp = sd(yearsexp))
+```
+
+Black has a lower average years of experience with lower dispersion.
+
+## Question 4e
+
+## Question 4f
+
+# Question 5
+
+The outcome of interest in bm is call which takes on the value 1 if the corresponding resume elicits an email or telephone callback for an interview. Check your answers to the following against Table 1 of the paper:
+
+a.  Calculate the average callback rate for all resumes in bm.
+
+b.  Calculate the average callback rates separately for resumes with “white-sounding” and “black-sounding” names. What do your results suggest?
+
+c.  Repeat part (b), but calculate the average rates for each combination of race and sex. What do your results suggest?
+
+# Question 6
+
+You saw in 5 (b) that applicants with African-American sounding names receive fewer callbacks. Is this statistically significant? Test the null hypothesis that there is no difference in callback rates between black- and white-sounding names against its two-sided alternative to find out.
+
+a.  Read the help file for the dplyr function pull() and use it to extract two binary vectors of call-backs from bm, one for black names and one for white names.
+
+b.  Store sample sizes, sample means, and sample variances in variables. Use these to compute your test statistic and degrees of freedom.
+
+c.  Look up the function qt() and use it to compute the critical value for a two-sided t-test with $\alpha = 0.05$.
+
+d.  Look up the function pt() and use it to compute the p-value. Check your result against Table 1.
+
+e.  Comment on your results.
+
+# Question 7
+
+What’s in a name? Read Section II E and Section IV of BM. Then look up “The Causes and Consequences of Distinctively Black Names” by Roland Fryer and Steven Levitt. Read its introduction and conclusion and answer these reading questions:
+
+a.What do you think: what social content is contained in names, and what questions can we study using names?
+
+b.  What are some weaknesses that BM acknowledge in their study?
+
+c.  What are some potential confounds that may complicate the interpretation of results based on randomly assigning stereotypically black and white names to resumes?
+
+d.  What is “taste-based” discrimination? What is “statistical” discrimination? How consistent are these models with the results of BM?
+
+e.  What are the key findings of Fryer and Levitt’s study?
+
+f.  How do Fryer and Levitt’s results relate to those of BM? What are some possible ways to reconcile the two sets of findings?
