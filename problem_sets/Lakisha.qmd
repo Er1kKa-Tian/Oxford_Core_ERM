@@ -1,7 +1,7 @@
 ---
 title: "Lakisha"
 author: "Xiaotian Tian"
-format: html
+format: pdf
 editor: visual
 ---
 
