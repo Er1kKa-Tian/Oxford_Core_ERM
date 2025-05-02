@@ -1,5 +1,6 @@
 ---
 title: "Lakisha"
+author: "Xiaotian Tian"
 format: html
 editor: visual
 ---
@@ -137,6 +138,30 @@ b.  Calculate the average callback rates separately for resumes with “white-so
 
 c.  Repeat part (b), but calculate the average rates for each combination of race and sex. What do your results suggest?
 
+## Question 5a
+
+```{r}
+mean(bm[["call"]])
+```
+
+## Question 5b
+
+```{r}
+bm |>
+  select(call, race) |>
+  group_by(race) |>
+  summarise(avgCallRate = mean(call))
+```
+
+## Question 5c
+
+```{r}
+bm |>
+  select(call, race, sex) |>
+  group_by(race, sex) |>
+  summarise(avgCallRate = mean(call))
+```
+
 # Question 6
 
 You saw in 5 (b) that applicants with African-American sounding names receive fewer callbacks. Is this statistically significant? Test the null hypothesis that there is no difference in callback rates between black- and white-sounding names against its two-sided alternative to find out.
@@ -150,6 +175,8 @@ c.  Look up the function qt() and use it to compute the critical value for a two
 d.  Look up the function pt() and use it to compute the p-value. Check your result against Table 1.
 
 e.  Comment on your results.
+
+## Question 6a
 
 # Question 7
 
