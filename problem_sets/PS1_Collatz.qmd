@@ -1,0 +1,84 @@
+---
+title: "PS1_Collatz"
+author: "Xiaotian Tian"
+format: pdf
+editor: visual
+---
+
+# **Problem Set - Collatz Conjecture**
+
+One of the most famous unsolved problems in mathematics is the *Collatz conjecture*. The problem sounds simple enough: consider a positive integer n. Then,
+
+-   if n is even: divide it by 2
+
+-   if n is odd: multiply by 3 and add 1
+
+The Collatz conjecture holds that repeatedly applying this *Collatz function* eventually transforms any positive integer n into 1. No matter the input, the output is always the same!
+
+This has been shown to hold for integers up to 2.95×1020, but mathematicians have not found a general proof.
+
+We’ll test this conjecture using Base R.
+
+# **Exercises**
+
+## Q1
+
+Define the function `collatz_sequence` that takes an integer `n` as input and returns the sequence of numbers leading to `1`. To organize your thinking, please proceed step-by-step as follows:
+
+### 1a
+
+To warm up consider n=3. Write an `if`-`else`-statement that uses `%%` to check whether 3 is even, performs the correct operation, and prints out the next integer in the sequence. **Hint:** You’ll need to use the R *modulo operator* `%%`. For example, `16` divided by `3` equals `5` with a remainder of `1`, so `16 %% 3` returns `1`. Experiment with `%%` to make sure you understand how it works. If necessary, read the R help file “Arithmetic Operators”.
+
+### 1b
+
+Now instead of printing out the result, store it. `seq_3` should contain the first two integers of the Collatz sequence for 3: store 3 as its first value using `c()`, then use `c()` again to append the next element to the sequence. Print out `seq_3` to check your work.
+
+### 1c
+
+Now write a `while` loop that builds on your code from (b). The loop should repeat the Collatz function until the sequence reaches 1. Start with n=5 this time. Store the sequence in `seq_5` and print it out to check your work. **Hint:** You need to initialise your running variable and `seq_5` *before* your while loop and later update both of them *inside* your `while` loop.
+
+### 1d
+
+You’ve written some handy code! But now suppose you want to compute the Collatz sequence for another integer. Copying-and-pasting your existing code is tedious and error prone. Instead, you can define a function building on your code from (c). `collatz_sequence` should take a positive integer `n`, iteratively apply the Collatz function, and return the Collatz sequence. Test your function for n=5. Your result should look like this:
+
+```         
+collatz_sequence(5) # Expected output: 5 16  8  4  2  1
+```
+
+## Q2
+
+You will now use your function `collatz_sequence` to check if the Collatz conjecture holds for *all integers* in the range {a,a+1,...,b−1,b}. You will define the function `collatz_holds` that takes integers `a` and `b` as inputs and returns a vector containing `TRUE` or `FALSE` for each integer, depending on whether the Collatz conjecture holds for all integers in this range. To organize your thinking, please proceed step-by-step as follows:
+
+### 2a
+
+Use a `for` loop to iterate over all integers between a=3 and b=10. Print out the Collatz sequences for these integers using `collatz_sequence`.
+
+### 2b
+
+Now write a function that can do the same for arbitrary a and b. Test your function for a=3 and b=10. **Hint:** look up `tail()`!
+
+### 2c
+
+Modify your function from the preceding step so that it prints out only the *last element* of each sequence rather than the whole sequence. Test your function for a=3 and b=10. **Hint:** look up `tail()` in the R help files.
+
+### 2d
+
+Modify your function from the preceding step as follows. Rather than printing out the last element of each sequence, use an `if`-`else`-statement to check whether this element equals one and store the appropriate `TRUE`/`FALSE` value in a vector. Then return this vector. **Hint:** Notice that you need to initialize an empty vector to store your`TRUE`/`FALSE` values within the function and append your results to it. This will look similar to what you did in question 1 to store the Collatz sequence. Test your function for a=3,b=10. Your output should look something like this:
+
+````         
+```         
+collatz_holds(3, 10) # Expected output: TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+```
+````
+
+## Q3
+
+You saw in 2(a) that the number of steps it takes for the Collatz sequence to reach 1 varies a lot. Write a function called `longest_collatz` that returns two numbers for any starting integer n∈{a,...,b}: the integer with the longest Collatz sequence, and the length of that sequence. Your function’s structure will be similar to `collatz_holds`. In your `for` loop, keep track of the `length()` of the sequence instead of the last integer. You can then use the Base R `max()` and `which.max()` to identify the integer with the longest Collatz sequence. Check your function for a=6, b=100. **Hint:** When identifying the integer with the longest Collatz sequence, don’t forget that you are iterating starting from `a`, not from 1. You should also try using a named vector for your function output to make it more human-readable. Aim to replicate the following output:
+
+```         
+longest_collatz(6, 100) # Expected output:  #    n steps  #   97   119
+```
+
+## Q4
+
+Write a function `get_collatz_steps()` that takes one argument `n_max` and returns a tibble with two columns: `n` and `steps`. In a given row of the tibble, `n` is the starting value for the Collatz sequence while `steps` is the number of steps needed to reach one. The tibble should contain `n_max` rows, with `n` ranging from `1:n_max`. Based on our results from above, we know that if `n_max` is at least `97` then the 97th row of this tibble will have `n` equal to `97` and `steps` equal to `119`. Use your function to create a tibble with `n_max = 500`. Then use `ggplot2` to create a scatter plot with `n` on the x-axis and `steps` on the y-axis to visualize your results.
