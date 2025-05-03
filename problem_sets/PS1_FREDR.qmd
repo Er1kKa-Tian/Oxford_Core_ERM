@@ -30,9 +30,33 @@ g.  Next, we’ll retrieve unemployment rates. To find the correct `series_id`, 
 library(fredr)
 ```
 
-## 1b
+## 1b/c/d
 
 ```{r}
 api_key <- "bc72f0649de4a3ae5a5daf4114b2aaaa" # delete this befor rendering!
-fredr_set_key(api_key) # delete this befor rendering!
+fredr_set_key(api_key)
 ```
+
+## 1e
+
+```{r}
+fredr(series_id = "GDP")
+```
+
+## 1f
+
+```{r}
+gdp <- fredr(series_id = "GDP", observation_start = as.Date("2000-01-01"))
+```
+
+## 1g
+
+```{r}
+fredr_series_search_text("unemployment")
+```
+
+```{r}
+u <- fredr(series_id = "UNRATE", observation_start = as.Date("2000-01-01"))
+```
+
+# Question 2
