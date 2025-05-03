@@ -5,7 +5,13 @@ format: pdf
 editor: visual
 ---
 
-# Exercise 1
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+# Exercise 1: Getting Familiar with FRED API
 
 a.  Install `R`’s `fredr` package and load the library.
 
@@ -59,4 +65,176 @@ fredr_series_search_text("unemployment")
 u <- fredr(series_id = "UNRATE", observation_start = as.Date("2000-01-01"))
 ```
 
-# Question 2
+# Exercise 2: Plotting macroeconomic patterns
+
+```{r}
+library(tidyverse)
+```
+
+## 2a
+
+Plot the monthly unemployment rates stored in u using ggplot2. Add a title, subtitle and axis labels to make it clear what you are plotting. You may find it helpful to consult the FRED documentation of the variable for details on the unemployment rate definition. Add a caption citing your datav source.
+
+```{r}
+u |>
+  ggplot(aes(x = date, y = value)) +
+  geom_line() +
+  labs(
+    x = "Time",
+    y = "Unemployment Rate",
+    title = "Unemployment Rate",
+    subtitle = "Percent, Seasonally Adjusted",
+    caption = "Source: FRED"
+  ) +
+  theme_bw()
+```
+
+## 2b
+
+What do you see? Describe how unemployment rates change during the business cycle.
+
+Unemployment spikes during recessions and drops during expansions.
+
+## 2c
+
+Next, plot GDP. Add a title, subtitle, axis labels and a caption. Consult the FRED documentation for their GDP variable for this. What does your plot tell you?
+
+```{r}
+gdp |>
+  ggplot(aes(x = date, y = value)) +
+  geom_line() +
+  labs(
+    x = "Time",
+    y = "GDP",
+    title = "Gross Domestic Product (GDP)",
+    subtitle = "Billions of Dollars, Seasonally Adjusted Annual Rate | Quarterly",
+    caption = "Source: U.S. Bureau of Economic Analysis via FRED"
+  ) +
+  theme_bw()
+```
+
+GDP continues to grow with temporary dips.
+
+## 2d
+
+Plotting total GDP gives you a good sense of long-run economic growth. To zoom in on business cycle changes, we’ll plot GDP growth. Modify gdp and create two new variables: qoq for quarter-over-quarter (QoQ) growth, and qoq_annualised for annualised quarter-over-quarter growth. Why do you get a warning “Removed 1 row containing missing values”? Hint: Quarter-over-quarter growth is defined as the percentage difference between the current quarter and the quarter in . You’ll find the lag() function helpful for constructing this measure.
+
+```{r}
+gdp <- gdp |>
+  mutate(
+    qoq = (value / lag(value) - 1) * 100,
+    qoq_annualised = ((value / lag(value)) ^ 4 - 1) * 100
+  )
+```
+
+## 2e
+
+Plot both measures of quarterly growth in the same plot. Assign different colours to both series manually and add a legend with scale_color_manual(). Add an appropriate title, subtitle, axis labels and caption. Hint: Don’t set a y inside ggplot(aes()). Add the y aesthetic in your line geom instead.
+
+```{r}
+gdp |>
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = qoq, color = "QoQ")) +
+  geom_line(aes(y = qoq_annualised, color = "QoQ Annualised")) +
+  scale_color_manual(values = c("QoQ" = "blue", "QoQ Annualised" = "red")) +
+  labs(
+    title = "GDP Growth",
+    subtitle = "QoQ / QoQ Annulised",
+    caption = "Source: U.S. Bureau of Economic Analysis via FRED; My Own Calculations",
+    x = "Time",
+    y = "Growth Rate (Percent)",
+    color = "Variables"
+  )
+```
+
+## 2f
+
+Remember how I said APIs are great for replicability? We can pull QoQ growth from the FRED API directly! This will also fix our “Removed 1 row containing missing values” error. Define a new tibble called gdp_growth containing quarterly growth rates from January 2000. Does it match your qoq variable? Hint: Set units = "pch" inside your API call.
+
+**I DID NOT FIND THIS TIME SERIES**
+
+# Exercise 3: Spotting recessions
+
+During a recession, economic production goes down and unemployment increases – that’s conventional wisdom. Surprisingly, academic economics doesn’t get much more specific than that. We don’t have a clear, unified definition for what makes a recession! Here’s how the NBER Business Cycle Dating Committee defines a recession:1
+
+The NBER’s definition emphasizes that a recession involves a significant decline in economic activity that is spread across the economy and lasts more than a few months.
+
+Despite the lack of a clear definition, the NBER identifies recessions. The committee assessments of when a recession starts and ends are publicly available here. I’ve saved you some legwork and coded a tibble with the start and end dates of the last three US recessions:
+
+```{r}
+recessions <- tibble( start = as.Date(c("2001-03-01", "2007-12-01", "2020-02-01")), end = as.Date(c("2001-11-30", "2009-06-30", "2020-04-30")) )
+```
+
+You’ll build on your plots from the previous exercise to shade recessions in the time series, recreating this NBER plot.
+
+## 3a
+
+Plot unemployment rates and add shading for recession periods using geom_rect(). To use the recession dates in recessions, set inherit.aes = FALSE and specify a new data input inside geom_rect(). Hint: Add the shading before the time series geom. In ggplot2, layer order matters: earlier layers are drawn underneath later ones.\
+
+```{r}
+plot_unempAndRecession <- u |>
+  ggplot(aes(x = date, y = value)) +
+  geom_rect(
+    inherit.aes = FALSE,
+    data = recessions,
+    aes(
+      xmin = start,
+      xmax = end,
+      ymin = -Inf,
+      ymax = Inf),
+    fill = "blue",
+    alpha = 0.2
+  ) +
+  geom_line() +
+  labs(
+    x = "Time",
+    y = "Unemployment Rate",
+    title = "Unemployment Rate",
+    subtitle = "Percent, Seasonally Adjusted",
+  ) +
+  theme_bw()
+```
+
+## 3b
+
+Plot QoQ GDP growth with recession shading, using the API data saved in gdp_growth.
+
+```{r}
+plot_qoqAndRecession <- gdp |>
+  ggplot(aes(x = date, y = qoq)) +
+  geom_rect(
+    inherit.aes = FALSE,
+    data = recessions,
+    aes(
+      xmin = start,
+      xmax = end,
+      ymin = -Inf,
+      ymax = Inf),
+    fill = "blue",
+    alpha = 0.2
+  ) +
+  geom_line() +
+  labs(
+    x = "Time",
+    y = "GDP Growth",
+    title = "GDP Growth",
+    subtitle = "Percent, QoQ",
+  ) +
+  theme_bw()
+```
+
+## 3c
+
+Combine the plots next to each other using the patchwork package. Add a joint title and caption citing FREDR and the NBER as sources. Hint: Look at plot_annotation() for this last step.
+
+```{r}
+#install.packages("patchwork")
+library(patchwork)
+
+patchwork <- plot_unempAndRecession + plot_qoqAndRecession
+
+patchwork + plot_annotation(
+  title = "Unemployment and DGP Growth Rate",
+  caption = "Source: FREDR and NBER"
+)
+```
