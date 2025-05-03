@@ -178,6 +178,58 @@ e.  Comment on your results.
 
 ## Question 6a
 
+```{r}
+# create vector for w/b respectively
+call_w <- bm |>
+  filter(race == "w") |>
+  pull(call)
+call_b <- bm |>
+  filter(race == "b") |>
+  pull(call)
+```
+
+## Question 6b
+
+Use the following test statistic and DOF:
+
+$$
+t = \frac{\bar x_1 - \bar x_2}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2} }} \,,\quad \text{DOF} \approx \frac{\bigl(\tfrac{s_1^2}{n_1}+\tfrac{s_2^2}{n_2}\bigr)^{2}}                   {\tfrac{(s_1^2/n_1)^2}{n_1-1} + \tfrac{(s_2^2/n_2)^2}{n_2-1}}
+$$
+
+```{r}
+# create summaritive statistics for w/b respectively
+
+obs_call_w <- length(call_w)
+mean_call_w <- mean(call_w)
+var_call_w <- var(call_w)
+
+obs_call_b <- length(call_b)
+mean_call_b <- mean(call_b)
+var_call_b <- var(call_b)
+
+# t stat
+t = (mean_call_w - mean_call_b) / sqrt(var_call_w / obs_call_w + var_call_b / obs_call_b)
+
+# dof
+dof <- floor( (var_call_w / obs_call_w + var_call_b / obs_call_b) ^ 2
+              / ( (var_call_w / obs_call_w) ^ 2 / (obs_call_w - 1)
+                  + (var_call_b / obs_call_b) ^ 2 / (obs_call_b - 1)  ) )
+```
+
+## Question 6c
+
+```{r}
+abs(qt(0.025, dof))
+```
+
+## Question 6d
+
+```{r}
+2 * pt(abs(t), dof, lower.tail = FALSE)
+```
+
+## Question 6e 
+
 # Question 7
 
 What’s in a name? Read Section II E and Section IV of BM. Then look up “The Causes and Consequences of Distinctively Black Names” by Roland Fryer and Steven Levitt. Read its introduction and conclusion and answer these reading questions:
