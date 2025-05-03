@@ -1,0 +1,38 @@
+---
+title: "FREDR"
+author: "Xiaotian Tian"
+format: pdf
+editor: visual
+---
+
+# Exercise 1
+
+a.  Install `R`’s `fredr` package and load the library.
+
+b.  Create a FRED account [here](https://fred.stlouisfed.org/).
+
+c.  After creating your account, login and generate an API key. Save your key as a string in a variable called `api_key`.
+
+d.  Set your API key using `fredr_set_key(api_key)`.
+
+Congratulations, you can now directly retrieve macroeconomic time series from the Federal Reserve Bank!
+
+e.  Suppose you are interested in GDP. You can get access to quarterly data from 1947 by simply tipping `fredr(series_id = "GDP")`. Try it out!
+
+f.  We will focus on data from 2000 for this problem sheet. Type `?fredr` into the console and study the function’s documentation. Modify your API call to retrieve quarterly GDP data from January 01, 2000, and save it in a `tibble` called `gdp`. **Hint:** If you want to know what other time series `fredr` has you can use `fredr_category_children(category_id = 0)` to navigate the data directory.
+
+g.  Next, we’ll retrieve unemployment rates. To find the correct `series_id`, use `fredr`’s text search: simply run `fredr_series_search_text("unemployment")`. After identifying the correct id, save monthly data on US unemployment rates from January 2000 in a `tibble` called `u`.
+
+## 1a
+
+```{r}
+# install.packages("fredr")
+library(fredr)
+```
+
+## 1b
+
+```{r}
+api_key <- "bc72f0649de4a3ae5a5daf4114b2aaaa" # delete this befor rendering!
+fredr_set_key(api_key) # delete this befor rendering!
+```
