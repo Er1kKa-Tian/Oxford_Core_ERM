@@ -19,6 +19,12 @@ This has been shown to hold for integers up to 2.95×1020, but mathematicians ha
 
 We’ll test this conjecture using Base R.
 
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
 # **Exercises**
 
 ## Q1
@@ -29,19 +35,79 @@ Define the function `collatz_sequence` that takes an integer `n` as input and re
 
 To warm up consider n=3. Write an `if`-`else`-statement that uses `%%` to check whether 3 is even, performs the correct operation, and prints out the next integer in the sequence. **Hint:** You’ll need to use the R *modulo operator* `%%`. For example, `16` divided by `3` equals `5` with a remainder of `1`, so `16 %% 3` returns `1`. Experiment with `%%` to make sure you understand how it works. If necessary, read the R help file “Arithmetic Operators”.
 
+```{r}
+n <- 3
+
+if ((n %% 2) == 0) {
+  n <- n / 2
+} else {
+  n <- n * 3 + 1
+}
+
+print(n)
+```
+
 ### 1b
 
 Now instead of printing out the result, store it. `seq_3` should contain the first two integers of the Collatz sequence for 3: store 3 as its first value using `c()`, then use `c()` again to append the next element to the sequence. Print out `seq_3` to check your work.
+
+```{r}
+seq_3 <- c(n)
+
+if ((n %% 2) == 0) {
+  n <- n / 2
+} else {
+  n <- n * 3 + 1
+}
+
+seq_3 <- c(seq_3, n)
+
+print(seq_3)
+```
 
 ### 1c
 
 Now write a `while` loop that builds on your code from (b). The loop should repeat the Collatz function until the sequence reaches 1. Start with n=5 this time. Store the sequence in `seq_5` and print it out to check your work. **Hint:** You need to initialise your running variable and `seq_5` *before* your while loop and later update both of them *inside* your `while` loop.
 
+```{r}
+seq_5 = c()
+
+collatz_sequence_5 <- function(n) {
+  seq_5 <- c(seq_5, n)
+  while (n > 1) {
+    if ((n %% 2) == 0) {
+      n <- n / 2
+    } else {
+      n <- n * 3 + 1
+    }
+    seq_5 <- c(seq_5, n)
+  }
+  return(seq_5)
+}
+
+collatz_sequence_5(5)
+```
+
 ### 1d
 
 You’ve written some handy code! But now suppose you want to compute the Collatz sequence for another integer. Copying-and-pasting your existing code is tedious and error prone. Instead, you can define a function building on your code from (c). `collatz_sequence` should take a positive integer `n`, iteratively apply the Collatz function, and return the Collatz sequence. Test your function for n=5. Your result should look like this:
 
-```         
+```{r}
+collatz_sequence <- function(n) {
+  seq <- c(n)
+  while (n > 1) {
+    if ((n %% 2) == 0) {
+      n <- n / 2
+    } else {
+      n <- n * 3 + 1
+    }
+    seq <- c(seq, n)
+  }
+  return(seq)
+}
+```
+
+```{r}
 collatz_sequence(5) # Expected output: 5 16  8  4  2  1
 ```
 
@@ -53,17 +119,55 @@ You will now use your function `collatz_sequence` to check if the Collatz conjec
 
 Use a `for` loop to iterate over all integers between a=3 and b=10. Print out the Collatz sequences for these integers using `collatz_sequence`.
 
+```{r}
+for (i in 3:10) {
+  print(collatz_sequence(i))
+}
+```
+
 ### 2b
 
 Now write a function that can do the same for arbitrary a and b. Test your function for a=3 and b=10. **Hint:** look up `tail()`!
+
+```{r}
+collatz_sequence_vec <- function(a, b) {
+  for (i in a:b) {
+    print(collatz_sequence(i))
+  }
+}
+
+collatz_sequence_vec(3, 10)
+```
 
 ### 2c
 
 Modify your function from the preceding step so that it prints out only the *last element* of each sequence rather than the whole sequence. Test your function for a=3 and b=10. **Hint:** look up `tail()` in the R help files.
 
+```{r}
+collatz_sequence_vec_last <- function(a, b) {
+  for (i in a:b) {
+    print(tail(collatz_sequence(i), n= 1))
+  }
+}
+
+collatz_sequence_vec_last(3, 10)
+```
+
 ### 2d
 
 Modify your function from the preceding step as follows. Rather than printing out the last element of each sequence, use an `if`-`else`-statement to check whether this element equals one and store the appropriate `TRUE`/`FALSE` value in a vector. Then return this vector. **Hint:** Notice that you need to initialize an empty vector to store your`TRUE`/`FALSE` values within the function and append your results to it. This will look similar to what you did in question 1 to store the Collatz sequence. Test your function for a=3,b=10. Your output should look something like this:
+
+```{r}
+collatz_holds <- function(a, b) {
+  results <- c()
+  for (i in a:b) {
+    results <- c(results, (tail(collatz_sequence(i), n = 1) == 1))
+  }
+  return(results)
+}
+
+collatz_holds(3, 10)
+```
 
 ````         
 ```         
