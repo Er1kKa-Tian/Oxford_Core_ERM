@@ -177,7 +177,19 @@ collatz_holds(3, 10) # Expected output: TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 
 ## Q3
 
-You saw in 2(a) that the number of steps it takes for the Collatz sequence to reach 1 varies a lot. Write a function called `longest_collatz` that returns two numbers for any starting integer n∈{a,...,b}: the integer with the longest Collatz sequence, and the length of that sequence. Your function’s structure will be similar to `collatz_holds`. In your `for` loop, keep track of the `length()` of the sequence instead of the last integer. You can then use the Base R `max()` and `which.max()` to identify the integer with the longest Collatz sequence. Check your function for a=6, b=100. **Hint:** When identifying the integer with the longest Collatz sequence, don’t forget that you are iterating starting from `a`, not from 1. You should also try using a named vector for your function output to make it more human-readable. Aim to replicate the following output:
+You saw in 2(a) that the number of steps it takes for the Collatz sequence to reach 1 varies a lot. Write a function called `longest_collatz` that returns two numbers for any starting integer n∈{a,...,b}: the integer with the longest Collatz sequence, and the length of that sequence. Your function’s structure will be similar to `collatz_holds`. In your `for` loop, keep track of the `length()` of the sequence instead of the last integer. You can then use the Base R `max()` and `which.max()` to identify the integer with the longest Collatz sequence. Check your function for a=6, b=100. **Hint:** When identifying the integer with the longest Collatz sequence, don’t forget that you are iterating starting from `a`, not from 1. You should also try using a named vector for your function output to make it more human-readable. Aim to replicate the following output:\
+
+```{r}
+longest_collatz <- function(a, b) {
+  results <- c()
+  for (i in a:b) {
+    results[as.character(i)] <- length(collatz_sequence(i))
+  }
+  return(c(which.max(results), max(results)))
+}
+
+longest_collatz(6, 100)
+```
 
 ```         
 longest_collatz(6, 100) # Expected output:  #    n steps  #   97   119
@@ -186,3 +198,30 @@ longest_collatz(6, 100) # Expected output:  #    n steps  #   97   119
 ## Q4
 
 Write a function `get_collatz_steps()` that takes one argument `n_max` and returns a tibble with two columns: `n` and `steps`. In a given row of the tibble, `n` is the starting value for the Collatz sequence while `steps` is the number of steps needed to reach one. The tibble should contain `n_max` rows, with `n` ranging from `1:n_max`. Based on our results from above, we know that if `n_max` is at least `97` then the 97th row of this tibble will have `n` equal to `97` and `steps` equal to `119`. Use your function to create a tibble with `n_max = 500`. Then use `ggplot2` to create a scatter plot with `n` on the x-axis and `steps` on the y-axis to visualize your results.
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+# define function
+get_collatz_steps <- function(n_max) {
+  n <- 1:n_max
+  steps <- c()
+  for (i in n) {
+    steps <- c(steps, length(collatz_sequence(i)))
+  }
+  return(tibble(n = n, steps = steps))
+}
+
+# plot for 500
+get_collatz_steps(500) |>
+  ggplot(aes(x = n, y = steps)) +
+  geom_point() +
+  labs(
+    title = "Length of Collatz Sequence",
+    x = "Starting Number",
+    y = "Steps"
+  )
+  theme_bw()
+```
