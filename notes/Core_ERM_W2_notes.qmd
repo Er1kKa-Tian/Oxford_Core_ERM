@@ -1,0 +1,165 @@
+---
+title: "Core_ERM_W2_notes"
+author: "Xiaotian Tian"
+format: pdf
+editor: visual
+---
+
+# Week 1 Part 1: Research Plumbing 1
+
+## Video
+
+### Stroe and Read Data
+
+-   `readr` package in tidyverse can load .csv or .tsv files smoothly
+
+-   `readxl` imports .xls and .xlsx files
+
+-   `haven` imports SAS, SPSS, and Stata files
+
+Example use
+
+```{r}
+library(tidyverse)
+```
+
+Example of `read.csv()`
+
+```{r}
+url <- "https://ditraglia.com/data/height-handspan.csv"
+height_handspan <- read.csv(url)
+
+height_handspan
+```
+
+Example of `read_dta()`
+
+```{r}
+library(haven)
+```
+
+```{r}
+url <- "https://ditraglia.com/data/lakisha_aer.dta"
+lakisha <- read_dta(url)
+
+lakisha
+```
+
+-   `getwd()` and `setwd()`
+
+-   Beaware that, on Windows, we need to either use `/` or `\\`
+
+    -   Better plan: use R Studio Projects and relative paths
+
+## Wrangling Data
+
+Sample data
+
+```{r}
+library(tidyverse)
+set.seed(92815)
+gradebook <- tibble(
+  student_id = c(192297, 291857, 500286, 449192, 372152, 627561), 
+  name = c('Alice', 'Bob', 'Charlotte', 'Dante', 
+           'Ethelburga', 'Felix'),
+  quiz1 = round(rnorm(6, 65, 15)),
+  quiz2 = round(rnorm(6, 88, 5)),
+  quiz3 = round(rnorm(6, 75, 10)),
+  midterm1 = round(rnorm(6, 75, 10)),
+  midterm2 = round(rnorm(6, 80, 8)), 
+  final = round(rnorm(6, 78, 11)))
+gradebook
+```
+
+### tidyselect
+
+`tidyselect` arguments in `dplyr`
+
+Example (easier ones)
+
+```{r}
+gradebook |>
+  select(starts_with("quiz"))
+```
+
+```{r}
+gradebook |>
+  select(ends_with("2"))
+```
+
+```{r}
+gradebook |>
+  select(contains("iz"))
+```
+
+```{r}
+gradebook |>
+  select(num_range("quiz", 2:3)) # select based on both a prefix and a numeric range
+```
+
+We can even use regular expressions!!
+
+```{r}
+gradebook |>
+  select(matches("quiz[0-9]+"))
+```
+
+`where()` takes a function as input and applies it to every column of th tibble and returns those where the function returns `TRUE`
+
+```{r}
+gradebook |>
+  select(where(is.numeric))
+```
+
+### Column-wise Operations
+
+```{r}
+gradebook |>
+  summarise(across(starts_with("quiz"), mean, .names = "{.col}_avg"))
+```
+
+`summarise(across(      ))`
+
+-   1st argument: `.cols` specifies columns to work with
+
+    -   specify explicitly using a vector `c("col1", "col2")`
+
+    -   use `tidyselect`
+
+-   2nd argument: `.fns` specifies function(s) to apply
+
+-   3rd argument (optional): `.names()` sets rule for naming transformed columns, using syntax from the `glue` package
+
+We can supply a custom function:
+
+```{r}
+zscore <- function(x) {
+  (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
+}
+
+gradebook |>
+  summarise(across(starts_with("quiz"), zscore, .names = "{.col}_zscore")) |>
+  select(ends_with("zscore"))
+```
+
+We can even supply a list of functions:
+
+```{r}
+mean_var <- list(
+  mean = \(x) mean(x, na.rm = TRUE),
+  var = \(x) var(x, na.rm = FALSE)
+)
+
+gradebook |>
+  summarise(across(
+    starts_with("quiz"),
+    mean_var,
+    .names = "{.col}_{.fn}"
+  ))
+```
+
+Exercise C
+
+```{r}
+
+```
