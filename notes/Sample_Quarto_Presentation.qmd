@@ -1,0 +1,20 @@
+---
+title: "Sample_Quarto_Presentation"
+author: "Xiaotian Tian"
+format: revealjs
+editor: visual
+---
+
+## Sample Presentation Slide 1
+
+-   Maths:
+
+-   $$\sum_{n=1}^\infty x_i$$
+
+-   [Er1kKa-Tian/Oxford_Core_ERM: Notes and PS Solutions for Core ERM (Oxford MPhil Econ)](https://github.com/Er1kKa-Tian/Oxford_Core_ERM)
+
+-   Code blocks
+
+```{r}
+print("Hello World")
+```

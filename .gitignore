@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 .DS_Store
+/.Rproj.user
+/notes/Sample_Quarto_Presentation_files
