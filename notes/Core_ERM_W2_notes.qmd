@@ -7,6 +7,12 @@ editor: visual
 
 # Week 1 Part 1: Research Plumbing 1
 
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
 ## Video
 
 ### Stroe and Read Data
@@ -161,5 +167,124 @@ gradebook |>
 Exercise C
 
 ```{r}
+# 1
+gradebook |>
+  summarise(across(
+    matches("quiz[\\d]?"),
+    sd,
+    .names = "{.col}_sd"
+  ))
+```
 
+```{r}
+# 2
+starwars |>
+  summarise(across(
+    everything(),
+    n_distinct,
+    .names = "n_{.col}s"
+  ))
+```
+
+```{r}
+# 3
+starwars |>
+  group_by(homeworld) |>
+  filter(n() >= 2) |>
+  summarise(across(
+    c(sex, species, eye_color),
+    n_distinct,
+    .names = "n_distinct_{.col}"
+  ))
+```
+
+```{r}
+# 4
+starwars |>
+  group_by(species) |>
+  filter(n() >= 2) |>
+  summarise(across(
+    where(~ typeof(.) %in% c("integer", "double")), # ~ starts an anonymous function (like lambda in python) and . refers to the column being tested
+    median,
+    na.rm = TRUE,
+    .name = "{.col}_median"
+  ))
+```
+
+```{r}
+# 5
+starwars |>
+  summarise(across(
+    where(~ typeof(.) %in% c("integer", "double")),
+    list("sd" = sd, "iqr" = IQR),
+    na.rm = TRUE,
+    .names = "{.col}_{.fn}"
+  ))
+```
+
+### Recode
+
+```{r}
+star <- read_csv('https://ditraglia.com/data/STAR.csv')
+```
+
+Use `case_match()` from `dplyr` to recode values
+
+```{r}
+star <- star |>
+  mutate(classtype = case_match(classtype,
+                                1 ~ "small",
+                                2 ~ "regular",
+                                3 ~ "regular+aid"))
+```
+
+```{r}
+star
+```
+
+## Producing Tables
+
+Use reproducible tools like `knitr::kable`, `gt` and `modelsummary` to generate and format tables, and include them in *any* document format.
+
+-   Today: [`datasummary`](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html) and [`knitr::kable`](https://bookdown.org/yihui/rmarkdown-cookbook/kable.html)
+
+-   Future lectures: [`modelsummary`](https://vincentarelbundock.github.io/modelsummary/articles/modelsummary.html)
+
+-   Some prefer [`stargazer`](https://cran.r-project.org/web/packages/stargazer/vignettes/stargazer.pdf). You can use this if you prefer.
+
+-   For the ultimate in precision table creation, try [`gt`](https://gt.rstudio.com/).
+
+```{r}
+library(modelsummary)
+```
+
+```{r}
+datasummary_skim(star)
+```
+
+We can compare summary statistics across categories defined by a "grouping" variable with syntax `datasummay_table( ~ [GROUPING_VAR], data)`
+
+```{r}
+star |>
+  select(yearssmall, g4math, g4reading, classtype) |>
+  datasummary_balance(~ classtype, data = _)
+```
+
+Customise table with `knitr::kable`:
+
+```{r}
+my_table <- star |>
+  group_by(classtype) |>
+  summarise(across(
+    starts_with("g4"),
+    \(x) mean(x, na.rm = TRUE),
+    .names = "{.col}_avg"
+  ))
+
+my_table |>
+  knitr::kable(
+    digits = 1,
+    caption = "Average grade 4 test scores",
+    col.names = c("Class Type", "Math", "Reading")
+    )
 ```
