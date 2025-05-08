@@ -25,7 +25,7 @@ Whether there exist differentials in treatment by race in labour market.
 
 ## Question 1c
 
-Callbacks are also more responsive to resume quality for White names than for African-American ones. The racial gap is uniform across occupation, industry, and employer size.
+Callbacks are also more responsive to resume quality for White names than for African-American ones. The racial gap is uniform across occupation, industry, and employer size.
 
 # Question 2
 
@@ -34,13 +34,13 @@ library(tidyverse)
 bm <- read_csv('https://ditraglia.com/data/lakisha_aer.csv')
 ```
 
-1.  Now that you have a rough idea of what the paper is about, it’s time to examine the dataset `bm`. Carry out the following steps:
+Now that you have a rough idea of what the paper is about, it’s time to examine the dataset `bm`. Carry out the following steps:
 
-    a.  Display the tibble `bm`. How many rows and columns does it have?
+a.  Display the tibble `bm`. How many rows and columns does it have?
 
-    b.  Display only the columns `sex`, `race` and `firstname` of `bm`. What information do these columns contain? How are `sex` and `race` encoded?
+b.  Display only the columns `sex`, `race` and `firstname` of `bm`. What information do these columns contain? How are `sex` and `race` encoded?
 
-    c.  Add two new columns to `bm`: `female` should take the value `TRUE` if `sex` is female, and `black` should take value `TRUE` if `race` is black.
+c.  Add two new columns to `bm`: `female` should take the value `TRUE` if `sex` is female, and `black` should take value `TRUE` if `race` is black.
 
 ## Question 2a
 
@@ -80,13 +80,17 @@ bm <-
 
 Read parts A-D of section II in BM. Then write a short paragraph answering the following: a. How did the experimenters create their bank of resumes for the experiment? b. The experimenters classified the resumes into two groups. What were they and how did they make the classification? c. How did the experimenters generate identities for their fictitious job applicants?
 
-## Question 3a 
+## Question 3a
 
-
+Start with resumes of actual job searchers but alter them sufficiently to create distinct resumes.
 
 ## Question 3b
 
+High and low Quality. The classification is based various factors including labour market experience, career profile, etc. The classification is admitted subjective but is made independent of race assignment.
+
 ## Question 3c
+
+They randomly choose "distinct names" — names are those that have the highest ratio of frequency in one racial group to frequency in the otherracial group — to let employers identify the race of the fictitious job applicants.
 
 # Question 4
 
@@ -122,7 +126,7 @@ bm |>
   summarise(computer_skill_percent = sum(computerskills) / n())
 ```
 
-Again, nearly balanced.
+Slight unbalance.
 
 ## Question 4c
 
@@ -148,7 +152,11 @@ Black has a lower average years of experience with lower dispersion.
 
 ## Question 4e
 
+If they are unbalanced, then difference in callback rates can be results due to difference in applicants' features instead of their races.
+
 ## Question 4f
+
+Education is more balanced than computer skill. This is because, in some cases, researchers slightly alter the resumes to improve the quality of match. This can be a potential problem when interpreting the difference in callback rate, as 4e.
 
 # Question 5
 
@@ -175,6 +183,8 @@ bm |>
   summarise(avgCallRate = mean(call))
 ```
 
+Resumes with White-sounding names have a higher callback rate in our sample.
+
 ## Question 5c
 
 ```{r}
@@ -183,6 +193,8 @@ bm |>
   group_by(race, sex) |>
   summarise(avgCallRate = mean(call))
 ```
+
+Also, female applicants have a lower callback rate.
 
 # Question 6
 
@@ -238,6 +250,10 @@ dof <- floor( (var_call_w / obs_call_w + var_call_b / obs_call_b) ^ 2
                   + (var_call_b / obs_call_b) ^ 2 / (obs_call_b - 1)  ) )
 ```
 
+```{r}
+t
+```
+
 ## Question 6c
 
 ```{r}
@@ -252,18 +268,51 @@ abs(qt(0.025, dof))
 
 ## Question 6e
 
+At 5% SL, we reject the null hypothesis that the callback rate for applicants with a Black-sounding names is the same as that for applicants with White-sounding names, providing evidence for racial discriminations in labour markets.
+
 # Question 7
 
 What’s in a name? Read Section II E and Section IV of BM. Then look up “The Causes and Consequences of Distinctively Black Names” by Roland Fryer and Steven Levitt. Read its introduction and conclusion and answer these reading questions:
 
-a.What do you think: what social content is contained in names, and what questions can we study using names?
+## Question 7a
+
+a.  What do you think: what social content is contained in names, and what questions can we study using names?
+
+Race, but also probably labour market productivity.
+
+## Question 7b
 
 b.  What are some weaknesses that BM acknowledge in their study?
 
+<!-- -->
+
+1.  Measure of outcome is callback not employment decision.
+2.  Resumes do not directly report race but instead suggest race through names.
+3.  Newspaper ads repsent only one channel for job search.
+
+## Question 7c
+
 c.  What are some potential confounds that may complicate the interpretation of results based on randomly assigning stereotypically black and white names to resumes?
+
+Productivity, as suggested by Roland Fryer and Steven Levitt.
+
+## Question 7d
 
 d.  What is “taste-based” discrimination? What is “statistical” discrimination? How consistent are these models with the results of BM?
 
+-   Taste-based discrimination: employers have preferences/tastes against candidates from certain groups
+-   Statistical discrimination: employers use observable features to infer unobservable individual features
+
+BM mainly argues for taste-based discrimination.
+
+## Question 7e
+
 e.  What are the key findings of Fryer and Levitt’s study?
 
+Having distinct names do not alter life outcomes.
+
+## Question 7f
+
 f.  How do Fryer and Levitt’s results relate to those of BM? What are some possible ways to reconcile the two sets of findings?
+
+Fryer and Levitt argue that: either BM's results do not extend beyond callback rates, or names are used to infer other unobservable factors related to productivity.
