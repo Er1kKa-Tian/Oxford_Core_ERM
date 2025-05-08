@@ -15,6 +15,18 @@ editor: visual
 
     c.  What do the authors consider to be their key findings?
 
+## Question 1a
+
+Whether there exist differentials in treatment by race in labour market.
+
+## Question 1b
+
+-   Data: details of made-up resumes and whether there's callback on each resume.
+
+## Question 1c
+
+Callbacks are also more responsive to resume quality for White names than for African-American ones. The racial gap is uniform across occupation, industry, and employer size.
+
 # Question 2
 
 ```{r}
@@ -38,7 +50,7 @@ bm
 
 4870 $\times$ 65
 
-## Question 1b
+## Question 2b
 
 ```{r}
 bm |>
@@ -55,7 +67,7 @@ Race (char): w - white, b - black
 
 firstname (char): first name of the candidate
 
-## Question 1c
+## Question 2c
 
 ```{r}
 bm <- 
@@ -65,6 +77,16 @@ bm <-
 ```
 
 # Question 3
+
+Read parts A-D of section II in BM. Then write a short paragraph answering the following: a. How did the experimenters create their bank of resumes for the experiment? b. The experimenters classified the resumes into two groups. What were they and how did they make the classification? c. How did the experimenters generate identities for their fictitious job applicants?
+
+## Question 3a 
+
+
+
+## Question 3b
+
+## Question 3c
 
 # Question 4
 
@@ -228,7 +250,7 @@ abs(qt(0.025, dof))
 2 * pt(abs(t), dof, lower.tail = FALSE)
 ```
 
-## Question 6e 
+## Question 6e
 
 # Question 7
 
