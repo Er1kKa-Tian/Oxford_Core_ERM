@@ -39,7 +39,7 @@ library(fredr)
 ## 1b/c/d
 
 ```{r}
-api_key <- "bc72f0649de4a3ae5a5daf4114b2aaaa" # delete this befor rendering!
+api_key <- Sys.getenv("FRED_API_KEY")
 fredr_set_key(api_key)
 ```
 
