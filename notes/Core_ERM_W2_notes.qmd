@@ -288,3 +288,297 @@ my_table |>
     col.names = c("Class Type", "Math", "Reading")
     )
 ```
+
+# Week 1 Part 2: Linear Regression
+
+## Linear Regression Basics
+
+```{r}
+gc() # garbage collection
+rm(list = ls()) # clear variables
+library(tidyverse)
+kids <- read_csv('https://ditraglia.com/data/child_test_data.csv')
+kids
+```
+
+Clean up with [**`janitor`**](https://cran.r-project.org/web/packages/janitor/vignettes/janitor.html)**`:`**
+
+```{r}
+library(janitor)
+kids <- clean_names(kids)
+kids
+```
+
+Linear Regression with `lm([FORMULA], [DATAFRAME])`:
+
+Formula Syntax:
+
+-   `~` to separate LHS from RHS: Y from X
+
+-   `+` to separate RHS variables: X1 from X2
+
+```{r}
+lm(kid_score ~ mom_iq + mom_age, data = kids)
+```
+
+Plot the regression line
+
+```{r}
+kids |>
+  ggplot(aes(
+    x = mom_iq, y = kid_score
+  )) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  xlab("Mom's IQ Score") +
+  ylab("Child's Test Score (Age 3)")
+```
+
+Getting more from `lm()`
+
+```{r}
+reg1 <- lm(kid_score ~ mom_iq, kids)
+str(reg1)
+```
+
+```{r}
+coef(reg1)
+```
+
+```{r}
+resid(reg1)[1:10] # only display the first 10
+```
+
+```{r}
+fitted.values(reg1)[1:10] # only display the first 10
+```
+
+Summarising the output of `lm()`
+
+```{r}
+summary(reg1)
+```
+
+Looking inside `summary()`
+
+```{r}
+str(summary(reg1))
+```
+
+Accessing specific result from `summary()`
+
+```{r}
+summary(reg1)$r.squared
+```
+
+## Tidying up with `broom()`
+
+Tidying up with `broom()` : `tidy()` returns a tibble with estimates, SEs, etc.
+
+```{r}
+library(broom)
+tidy(reg1)
+```
+
+`glance()` returns a tibble with measurement of "model fit"
+
+```{r}
+glance(reg1)
+```
+
+and `broom` plays nicely with `dyplr`
+
+```{r}
+reg1 |>
+  tidy() |>
+  filter(term == "mom_iq") |>
+  pull(p.value)
+```
+
+`augment()` ensembles a number of figures
+
+```{r}
+augment(reg1, kids)
+```
+
+## Dummy Variables
+
+We can recode a variable into 2-category str variable and R will construct the dummy for us
+
+```{r}
+kids <- kids |>
+  mutate(mom_education = if_else(mom_hs == 1, "HS", "NoHS"))
+
+lm(kid_score ~ mom_education, kids)
+```
+
+Designate the baseline category:
+
+```{r}
+kids <- kids |>
+  mutate(mom_education = fct_relevel(mom_education, "NoHS"))
+
+lm(kid_score ~ mom_education, kids)
+```
+
+## R-formula
+
+More on **R-formula**:
+
+-   `y ~ x` is an R **formula**; use to specify a statistical model
+
+-   Within a formula, certain characters have a special meaning
+
+-   You’ve already met `~` and `+`
+
+-   The rest are `.`, `-`, `1`, `:`, `*`, `^`, and `I()`.
+
+-   `^` and `*` are more exotic; I’ll skip them here
+
+-   See my [R Formula Cheatsheet](https://www.econometrics.blog/post/the-r-formula-cheatsheet/) for full details.
+
+Regressing one variable on all other variables using `.`:
+
+```{r}
+lm(kid_score ~ ., kids)
+```
+
+Removing predictors with `-` :
+
+```{r}
+lm(kid_score ~ . - mom_hs, kids)
+```
+
+Remove the intercept by `-`
+
+`1`:
+
+```{r}
+lm(kid_socre ~ . - 1, kids)
+```
+
+Regress only on an intercept:
+
+```{r}
+lm(kid_score ~ 1, kids)
+```
+
+Remove the intercept when having categorical dummies:
+
+```{r}
+lm(kid_score ~ mom_education - 1, kids)
+```
+
+Formulating new predictors:
+
+```{r}
+new_kids <- kids |>
+  mutate(log_kid_score = log(kid_score),
+         mom_age_sq = mom_age^2)
+lm(log_kid_score ~ mom_age + mom_age_sq, new_kids)
+```
+
+A cleaner approach:
+
+```{r}
+lm(log(kid_score) ~ mom_age + I(mom_age^2), kids)
+```
+
+Adding interactions with `:`:
+
+```{r}
+lm(kid_score ~ mom_age:mom_iq, kids)
+```
+
+## Predicted Values
+
+**Syntax**: `predict(object, newdata)`
+
+```{r}
+reg2 <- lm(kid_score ~ mom_iq * mom_education, kids) 
+new_kids <- data.frame(mom_iq = c(100, 120, 80), 
+                       mom_education = c('NoHS', 'HS', 'HS'))
+
+predict(reg2, new_kids)
+```
+
+Predicting with `augment()`:
+
+```{r}
+augment(reg2, newdata = new_kids) |>
+  rename(kid_score_pred = .fitted)
+```
+
+## Testing Linear Restrictions
+
+`linearHypothesis()` from `car` provides F-test.
+
+**Some Warnings**
+
+-   Null hypothesis significance testing (NHST) is rarely the right tool for the job in applied work.
+
+-   Have you see the memo on [p-values](https://www.amstat.org/asa/files/pdfs/P-ValueStatement.pdf)?
+
+-   **Statistical Inference - Defense Against the Dark Arts**
+
+-   See also: [FF-tests, R2R2 and Other Distractions](https://www.stat.cmu.edu/~cshalizi/mreg/15/lectures/10/lecture-10.pdf)
+
+-   Today: assume *homoskedasticity*.
+
+Testing $\beta_0 = \beta_1 = 1$:
+
+```{r}
+library(car)
+linearHypothesis(reg1, c("mom_iq = 1", "(Intercept) = 1"))
+```
+
+Variants of the test:
+
+Use the asymptotic $\chi^2$ distribution:
+
+```{r}
+linearHypothesis(reg1, c("mom_iq = 1", "(Intercept) = 1"), test = "Chisq")
+```
+
+## Making Nice Regression Tables
+
+`modelsummary()` function for regression tables
+
+```{r}
+library(modelsummary)
+```
+
+```{r}
+reg_pooled <- lm(kid_score ~ mom_iq, kids)
+reg_hs_dummy <- lm(kid_score ~ mom_iq + mom_hs, kids)
+reg_interact <- lm(kid_score ~ mom_iq * mom_hs, kids)
+```
+
+```{r}
+modelsummary(reg_pooled)
+```
+
+Clean up results:
+
+```{r}
+modelsummary(reg_pooled, gof_omit = 'Log.Lik|R2 Adj.|AIC|BIC|F', fmt = 2, 
+             title = 'Regression results for kids dataset', 
+             notes = 'Source: all data were fabricated by the authors.') 
+```
+
+Results of Several Regressions:
+
+```{r}
+kids_regressions <- list(reg_pooled, reg_hs_dummy, reg_interact)
+modelsummary(kids_regressions, gof_omit = 'Log.Lik|R2 Adj.|AIC|BIC|F', fmt = 2)
+```
+
+\
+
+## Misc
+
+What will happen if regress $Y$ on $\hat{Y}$ ?
+
+-   Intercept 0, slope 1
+
+-   We can write out the objective function and see only intercept 0, slope 1 can be optimal
