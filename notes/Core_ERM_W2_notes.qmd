@@ -421,6 +421,8 @@ kids <- kids |>
 lm(kid_score ~ mom_education, kids)
 ```
 
+To generate a dummy for every value of a variable, use `factor([variable])` in your formula.
+
 ## R-formula
 
 More on **R-formula**:
