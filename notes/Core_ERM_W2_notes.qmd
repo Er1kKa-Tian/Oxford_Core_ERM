@@ -833,7 +833,7 @@ dice_sum <- \() {
 # use iteration to call that function for a large number of times
 
 nreps <- 1e4
-sims <- map_dbl(1:nreps, \(i) dice_sum())
+sims <- map_dbl(1:nreps, \(i) dice_sum()) # the "i" argument for the lambda function is used to assign the position in the result vector
 
 # summarise
 tibble(x = sims) |>
@@ -848,3 +848,7 @@ What will happen if regress $Y$ on $\hat{Y}$ ?
 -   Intercept 0, slope 1
 
 -   We can write out the objective function and see only intercept 0, slope 1 can be optimal
+
+Simulations are important!
+
+Except early return, specifying `return` in a R function is consider a bad style. By default, R functions return what will be printed in the last line.
