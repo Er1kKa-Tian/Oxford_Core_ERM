@@ -637,7 +637,7 @@ set.seed(114514)
 **Built-in Random Variables in R**
 
 | **R commands** | **Distribution** |
-|:---|:---|
+|:-----------------------------------|:-----------------------------------|
 | `d/p/q/rbeta` | [Beta](https://en.wikipedia.org/wiki/Beta_distribution) |
 | `d/p/q/rbinom` | [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution) |
 | `d/p/q/rcauchy` | [Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution) |
@@ -649,7 +649,7 @@ set.seed(114514)
 | `d/q/p/rhyper` | [Hypergeometric](https://en.wikipedia.org/wiki/Geometric_distribution) |
 
 | **R commands** | **Distribution** |
-|:---|:---|
+|:-----------------------------------|:-----------------------------------|
 | `d/p/q/rlogis` | [Logistic](https://en.wikipedia.org/wiki/Logistic_distribution) |
 | `d/p/q/rlnorm` | [Log Normal](https://en.wikipedia.org/wiki/Lognormal_distribution) |
 | `d/p/q/rnbinom` | [Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution) |
@@ -763,6 +763,83 @@ Quantile-Quantile (QQ) Plots
 
 ![](images/clipboard-2509058013.png)\
 More details of QQ plots in [this blog post](https://www.econometrics.blog/post/thirty-isn-t-the-magic-number/).
+
+Example: t Distribution with dof3
+
+```{r}
+t3_sims <- rt(500, df = 3)
+tibble(x = t3_sims) |>
+  ggplot(aes(sample = x)) +
+  geom_qq() # default is N(0,1)
+```
+
+Plot a line through the 1st and 3rd quartiles:
+
+```{r}
+tibble(x = t3_sims) |>
+  ggplot(aes(sample = x)) +
+  geom_qq(distribution = qt, dparams = list(df = 3)) +
+  geom_qq_line(col = "red", distribution = qt, dparams = list(df = 3))
+```
+
+Another example: Exp(1) simulation
+
+```{r}
+tibble(x = exp1_sims) |>
+  ggplot(aes(sample = x)) +
+  geom_qq(distribution = qexp, dparams = list(rate = 1)) +
+  geom_qq_line(col = "red", distribution = qexp, dparam = list(rate = 1))
+```
+
+## A Simple Example of Monte Carlo Simulation
+
+**General Recipe**:
+
+1.  Write a function to carry out the experiment *once*.
+
+2.  Use iteration to call that function a large number of times.
+
+    -   Better alternative than using a `for()` loop: functional programming
+
+        -   **Functional**: a function that takes a *another* function as an input and returns a vector.
+
+        -   We’ll use [`purrr`](https://purrr.tidyverse.org/) for functional programming
+
+        -   You’ve already installed it: `library(tidyverse)`
+
+        -   `purrr` References:
+
+            -   [`purrr` cheatsheet](https://github.com/rstudio/cheatsheets/blob/main/purrr.pdf)
+
+            -   [R for Data Science, Chapter 21](https://r4ds.hadley.nz/iteration.html)
+
+            -   [Advanced R Chapter 9](https://adv-r.hadley.nz/functionals.html)
+
+        -   Today: simple application of the [`map()` function](https://purrr.tidyverse.org/reference/map.html)
+
+3.  Store and summarize the results; set seed for replicability.
+
+Example: compute probabilities for sum for two fair, six-sided dice.
+
+```{r}
+# write a function to carry out the experiment once
+
+dice_sum <- \() {
+  die1 <- sample(1:6, 1)
+  die2 <- sample(1:6, 1)
+  die1 + die2
+}
+
+# use iteration to call that function for a large number of times
+
+nreps <- 1e4
+sims <- map_dbl(1:nreps, \(i) dice_sum())
+
+# summarise
+tibble(x = sims) |>
+  ggplot(aes(x)) +
+  geom_bar()
+```
 
 ## Misc
 
