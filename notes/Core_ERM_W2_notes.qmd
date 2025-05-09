@@ -5,7 +5,7 @@ format: pdf
 editor: visual
 ---
 
-# Week 1 Part 1: Research Plumbing 1
+# Week 2 Part 1: Research Plumbing 1
 
 ```{r}
 options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
@@ -289,7 +289,7 @@ my_table |>
     )
 ```
 
-# Week 1 Part 2: Linear Regression
+# Week 2 Part 2: Linear Regression
 
 ## Linear Regression Basics
 
@@ -575,7 +575,194 @@ kids_regressions <- list(reg_pooled, reg_hs_dummy, reg_interact)
 modelsummary(kids_regressions, gof_omit = 'Log.Lik|R2 Adj.|AIC|BIC|F', fmt = 2)
 ```
 
-\
+# Week 2 Part 3: Monte Carlo Simulation Basics in R
+
+```{r}
+.rs.restartR() # restart R session
+```
+
+```{r}
+rm(list = ls()) # remove all variables
+gc() # garbage collection
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+```
+
+```{r}
+library(tidyverse)
+```
+
+## Basics
+
+Rough idea:
+
+-   Independent draws from $U[0,1]$
+
+-   Transform them into other probability distributions
+
+`sample()`: draw from a vector in $R$:
+
+```{r}
+sample(
+  c("A", "B", "C"),
+  size = 10,
+  replace = TRUE,
+  prob = c(0.1, 0.1, 0.8)
+)
+```
+
+Setting the seed:
+
+```{r}
+set.seed(114514)
+```
+
+## d/p/q/r of A Distribution
+
+-   Base R has functions for many common RVs
+
+-   Each RV has an abbreviation: e.g. `norm` for normal
+
+-   Each RV has four related functions:
+
+    -   `d` = density if continuous, mass function if discrete
+
+    -   `p` = CDF
+
+    -   `q` = quantile function (inverse CDF)
+
+    -   `r` makes random draws
+
+-   E.g. `dnorm()`, `pnorm()`, `qnorm()`, `rnorm()`
+
+**Built-in Random Variables in R**
+
+| **R commands** | **Distribution** |
+|:---|:---|
+| `d/p/q/rbeta` | [Beta](https://en.wikipedia.org/wiki/Beta_distribution) |
+| `d/p/q/rbinom` | [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution) |
+| `d/p/q/rcauchy` | [Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution) |
+| `d/p/q/rchisq` | [Chi-Squared](https://en.wikipedia.org/wiki/Chi-squared_distribution) |
+| `d/p/q/rexp` | [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution) |
+| `d/p/q/rf` | [F](https://en.wikipedia.org/wiki/F-distribution) |
+| `d/p/q/rgamma` | [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) |
+| `d/p/q/rgeom` | [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution) |
+| `d/q/p/rhyper` | [Hypergeometric](https://en.wikipedia.org/wiki/Geometric_distribution) |
+
+| **R commands** | **Distribution** |
+|:---|:---|
+| `d/p/q/rlogis` | [Logistic](https://en.wikipedia.org/wiki/Logistic_distribution) |
+| `d/p/q/rlnorm` | [Log Normal](https://en.wikipedia.org/wiki/Lognormal_distribution) |
+| `d/p/q/rnbinom` | [Negative Binomial](https://en.wikipedia.org/wiki/Negative_binomial_distribution) |
+| `d/p/q/rnorm` | [Normal](https://en.wikipedia.org/wiki/Normal_distribution) |
+| `d/p/q/rpois` | [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution) |
+| `d/p/q/rt` | [Student’s t](https://en.wikipedia.org/wiki/Student%27s_t-distribution) |
+| `d/p/q/runif` | [Uniform](https://en.wikipedia.org/wiki/Continuous_uniform_distribution) |
+| `d/p/q/rweibull` | [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution) |
+
+Example: Normal
+
+-   Warning: R parameterises the Normal distribution in terms of its mean and *standard deviation!!!*
+
+```{r}
+mu <- 0
+sd <- 1
+
+# Normal PDF
+
+normal_density <- tibble(x = seq(from = -4, to = 4, by = 0.01)) |>
+  mutate(density = dnorm(x, mu, sd))
+
+normal_density |>
+  ggplot(aes(x, density)) +
+  geom_line()
+```
+
+```{r}
+# Normal CDF
+
+normal_cdf <- tibble(x = seq(from = -4, to = 4, by = 0.01)) |>
+  mutate(cdf = pnorm(x, mu, sd))
+
+normal_cdf |>
+  ggplot(aes(x, cdf)) +
+  geom_line()
+```
+
+```{r}
+# Normal Draws
+
+set.seed(1234)
+
+normal_sims <- rnorm(500, mu, sd)
+
+tibble(normal_sims) |>
+  ggplot(aes(x = normal_sims)) +
+  geom_histogram(bins = 20)
+```
+
+Example: Binomial(10, 0.2)
+
+```{r}
+n <- 10
+p <- 0.2
+
+# pmf
+
+binom_pmf <- tibble(x = 0:n) |>
+  mutate(p = dbinom(x, n, p))
+
+binom_pmf |>
+  ggplot(aes(x = x, y = p)) +
+  geom_point() +
+  geom_segment(aes(xend = x, yend = 0)) +
+  labs(title = "Binomial(10,0.2) pmf",
+       y = "p(x)")
+```
+
+```{r}
+set.seed(1693)
+
+binom_sims = rbinom(500, n, p)
+
+tibble(binom_sims) |>
+  ggplot(aes(x = binom_sims)) +
+  geom_bar()
+```
+
+## The Inverse Transformation Method and QQ Plots
+
+The Inverse Transformation Method:
+
+-   Already know how make uniform draws.
+
+-   Simulate *arbitrary* RV with CDF F and quantile function Q.
+
+-   **Inverse Transformation Method**
+
+    1.  Generate U∼Uniform(0,1).
+
+    2.  Set Y≡Q(U)⟹P(Y≤y)=F(y)
+
+-   F continuous & strictly increasing $⟹Q=F^{-1}$.
+
+-   Otherwise, Q is the [generalized inverse](https://en.wikipedia.org/wiki/Cumulative_distribution_function#Inverse_distribution_function_(quantile_function)) of F.
+
+Example: Exponential(1)
+
+![](images/clipboard-2172043404.png)
+
+```{r}
+u <- runif(1e5)
+exp1_sims <- -log(1 - u)
+tibble(x = exp1_sims) |>
+  ggplot(aes(x)) +
+  geom_histogram()
+```
+
+Quantile-Quantile (QQ) Plots
+
+![](images/clipboard-2509058013.png)\
+More details of QQ plots in [this blog post](https://www.econometrics.blog/post/thirty-isn-t-the-magic-number/).
 
 ## Misc
 
