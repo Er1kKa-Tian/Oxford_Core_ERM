@@ -1,0 +1,6 @@
+---
+title: "Core_ERM_W3_notes"
+author: "Er1kKa"
+format: pdf
+editor: visual
+---
