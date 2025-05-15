@@ -46,8 +46,134 @@ football <- football |>
 # calculate means for 2 groups
 q1 <- football |>
   group_by(at_home) |>
-  summarise(mean_SPREAD = mean(SPREAD))
+  summarise(mean_SPREAD = mean(SPREAD)) |>
+  pull(mean_SPREAD)
 
-# final results
+# final result
+q1[2] - q1[1]
+```
 
+# Question 2
+
+The interpretation for intercept here is "the expected spread when both teams are in a foreign ground". However, by definition, this expectation should be zero, since team A and team B are randomly assigned.
+
+# Question 3
+
+```{r}
+library(broom)
+```
+
+```{r}
+#regression
+q3_regression <- lm(SPREAD ~ factor(H) - 1, football)
+summary(q3_regression)
+```
+
+Interpretation of coefficient:
+
+-   A guest team at its opponent's home is estimated to lose 0.923 points on average. (Insignificant at 5% SL)
+
+-   Being in a foreign field which is also unfamiliar to the opponent is estimated to win by 2.5 points on average. (Insignificant at 5% SL)
+
+-   Being in the home field is estimated to win by 14.9518 points on average. (Significant at 5% SL)
+
+R-squared is 0.1329.
+
+# Question 4
+
+```{r}
+library(GGally)
+```
+
+```{r}
+ggpairs(data = football,
+        columns = c("MAT", "SAG", "BIL", "COL", "MAS", "DUN", "REC"))
+```
+
+All of our predictors are highly correlated.
+
+# Question 5
+
+```{r}
+q5_regression <- lm(SPREAD ~ factor(H) + LV + REC + MAT + SAG + BIL + COL + MAS + DUN - 1, data = football)
+
+summary(q5_regression)
+```
+
+Apart from H and LV, no other predictor has significant marginal predictive power.
+
+Perform a joint test:
+
+```{r}
+library(car)
+linearHypothesis(q5_regression, c("REC = 1", "MAT = 1", "SAG = 1", "BIL = 1", "COL = 1", "MAS = 1", "DUN = 1"))
+```
+
+They do have significant joint predictive power, so we cannot drop them.
+
+Compare with SLR:
+
+```{r}
+SLRs <- list(
+  lm(SPREAD ~ MAT - 1, data = football),
+  lm(SPREAD ~ SAG - 1, data = football),
+  lm(SPREAD ~ BIL - 1, data = football),
+  lm(SPREAD ~ COL - 1, data = football),
+  lm(SPREAD ~ MAS - 1, data = football),
+  lm(SPREAD ~ DUN - 1, data = football),
+  lm(SPREAD ~ LV - 1, data = football)
+)
+
+for (regression in SLRs) {
+  print(summary(regression)$adj.r.squared)
+}
+```
+
+The highest adjusted R-square for individual predictors is 0.4559, which is still lower than the adjusted R-square for the big model 0.4608. Therefore, putting them together increases our predictive power.
+
+# Question 6
+
+```{r}
+q6_regression <- lm(SPREAD ~ factor(H) + LV + REC - 1, data = football)
+
+summary(q6_regression)
+```
+
+```{r}
+linearHypothesis(q6_regression, c("REC = 0", "factor(H)-1 = 0", "factor(H)0 = 0", "factor(H)1 = 0"))
+```
+
+H and REC do jointly provide additional predictive information at 5% SL.
+
+# Question 7
+
+```{r}
+q7_regression <- lm(SPREAD ~ LV - 1, data = football)
+
+summary(q7_regression)
+```
+
+```{r}
+linearHypothesis(q7_regression, "LV = 1")
+```
+
+Efficiency of betting market implies the coefficient of LV should be 1. We cannot reject that hypothesis at 5% SL.
+
+The R-square is 0.4562, which indicates quite good predictive power – around half of the total variations in SPREAD can be explained using LV.
+
+# Question 8
+
+```{r}
+library(modelsummary)
+```
+
+```{r}
+all_regressions <- append(SLRs, list(q3_regression, q5_regression, q5_regression_2, q6_regression, q7_regression))
+
+modelsummary(
+  all_regressions,
+  gof_omit = 'Log.Lik|R2 Adj.|AIC|BIC|F',
+  fmt = 2,
+  title = 'Regression results for football'
+  )
 ```
