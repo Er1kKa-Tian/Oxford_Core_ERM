@@ -1,0 +1,53 @@
+---
+title: "PS2_Football"
+format: pdf
+editor: visual
+---
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+#library packages and import dataset
+library(tidyverse)
+football <- read_csv('https://ditraglia.com/data/fair_football.csv')
+football
+```
+
+# Question 1
+
+## How often does the home team win?
+
+```{r}
+#generate new winning variable
+football <- football |>
+  mutate(team_A_wins = (SPREAD > 0))
+
+#how often does the home team win?
+football |>
+  group_by(H) |>
+  summarise(win_rate = mean(team_A_wins))
+```
+
+Avg win rate of the home team = 0.812
+
+Avg win rate of the guest team = 0.502
+
+## How many more points does the home team score on average?
+
+```{r}
+# generate home dummy
+football <- football |>
+  mutate(at_home = (H == 1))
+
+# calculate means for 2 groups
+q1 <- football |>
+  group_by(at_home) |>
+  summarise(mean_SPREAD = mean(SPREAD))
+
+# final results
+
+```
