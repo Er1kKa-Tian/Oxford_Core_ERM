@@ -4,3 +4,104 @@ author: "Er1kKa"
 format: pdf
 editor: visual
 ---
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+# Week 3 Part 1: Logistic Regression
+
+## Logistic Regression Simulation
+
+```{r}
+library(tidyverse)
+set.seed(1234)
+n <- 500
+x <- rnorm(n, mean = 1.5, sd = 2) # generate x
+ystar <- 0.5 + 1 * x + rlogis(n) # generate latent variable
+y <- 1 * (ystar > 0) # threshold corssing transformation
+mydat <- tibble(x, y)
+mydat
+```
+
+## Generalised Linear Models
+
+### Intro
+
+`glm(formula, family, data)`
+
+-   this is a base R function to estimate generalised linear models
+
+-   formula and data work just like `lm()`
+
+-   family describe the error distribution and link function
+
+    -   `family = binomial(link = "logit)`
+
+    -   `family = binomial(link = "probit")`
+
+    -   `family = poisson(link = "log")`
+
+-   Compatible with `tidy(), glance(), augment()`
+
+### Logit
+
+```{r}
+lreg <- glm(y ~ x, family = binomial(link = "logit"), mydat)
+summary(lreg)
+```
+
+### Predicted Probabilities
+
+-   `predict()` works with `glm()` almost as it does for `lm()`
+
+-   To get predicted probabilities, set `type = "response"`
+
+Example:
+
+```{r}
+# P(Y = 1 | X = 0)
+predict(lreg, newdata = data.frame(x = 0), type = "response")
+```
+
+```{r}
+# P (Y = 1 | X = mean(X))
+predict(lreg, newdata = data.frame(x = mean(x)), type = "response")
+```
+
+```{r}
+# P(Y = 1 | X = observed values)
+p_hat <- predict(lreg, type = "response")
+head(p_hat)
+```
+
+`augment()` with `glm()` objects:
+
+```{r}
+library(broom)
+augment(lreg, mydat, type.predict = "response")
+```
+
+### Plotting Logit Regressions
+
+```{r}
+ggplot(mydat, aes(x, y)) +
+  stat_smooth(method = "glm", method.args = list(family = "binomial")) +
+  geom_point()
+```
+
+-   Notice the new argument to `stat_smooth()`
+
+Use jittering to improve legibility:
+
+```{r}
+ggplot(mydat, aes(x, y)) +
+  stat_smooth(method = "glm", method.args = list(family = "binomial")) +
+  geom_jitter(width = 0.5, #add noise to x-coordinates,
+              height = 0.1 #add noise to y-coordinates
+              )
+```
+
+## 
