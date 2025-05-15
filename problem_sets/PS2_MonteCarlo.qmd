@@ -1,0 +1,13 @@
+---
+title: "PS2_Monte_Carlo"
+format: pdf
+editor: visual
+---
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+# Question 1
