@@ -76,7 +76,158 @@ tibble(x = runif_zx81(seed = 114, n = 1000)) |>
 ## a
 
 ```{r}
-rnorm_zx81 <- \() {
-  
+rnorm_zx81 <- \(seed, n, mean, sd) {
+  #generate U1 and U2 by calling runif_zx81
+  #generate R and theta
+  #generate Z1 and Z2
+  #merging Z1 and Z2
+  #rescale and reposition
 }
 ```
+
+## b
+
+```{r}
+unif_seq <- c(0.5600805, 0.5767570, 0.8858708, 0.9313472, 0.7665961, 0.9763004)
+
+#generate U1 and U2
+len <- length(unif_seq)
+U1 <- unif_seq[1:(len / 2)]
+U2 <- unif_seq[((len / 2) + 1):len]
+
+#generate R and theta
+R <- sqrt(-2 * log(U1))
+theta <- 2 * pi * U2
+
+#generate Z1 and Z2
+Z1 <- R * cos(theta)
+Z2 <- R * sin(theta)
+
+#merging Z1 and Z2
+output <- append(Z1, Z2)
+
+#rescale and reposition
+output <- output / sqrt(2) + 2
+```
+
+## c
+
+```{r}
+rnorm_zx81 <- \(seed, n, mean = 0, sd = 1) {
+  #generate n+1 numbers if n is odd
+  if ((n %% 2) == 1) {
+    len <- n + 1
+  } else {
+    len <- n
+  }
+  
+  #generate U1 and U2 by calling runif_zx81
+  unif_seq <- runif_zx81(seed = seed, n = len)
+  U1 <- unif_seq[1:(len / 2)]
+  U2 <- unif_seq[((len / 2) + 1):len]
+  
+  #generate R and theta
+  R <- sqrt(-2 * log(U1))
+  theta <- 2 * pi * U2
+  
+  #generate Z1 and Z2
+  Z1 <- R * cos(theta)
+  Z2 <- R * sin(theta)
+  
+  #merging Z1 and Z2
+  output <- append(Z1, Z2)
+  
+  #rescale and reposition
+  output <- output / sqrt(sd) + mean
+  
+  #return
+  output[1:n]
+}
+```
+
+## d
+
+```{r}
+#generate sample
+random_draws <- rnorm_zx81(seed = 114, n = 1000)
+random_draws_tibble <- tibble(x = random_draws)
+```
+
+```{r}
+#histogram
+random_draws_tibble |>
+  ggplot(aes(x = x)) +
+  geom_histogram()
+```
+
+```{r}
+#QQ plot
+random_draws_tibble |>
+  ggplot(aes(sample = x)) +
+  geom_qq()
+```
+
+```{r}
+##TS plot
+random_draws_tibble_TS <- tibble(t = 1:1000, x = random_draws)
+random_draws_tibble_TS |>
+  ggplot(aes(x = t, y = x)) +
+  geom_line(color = "red")
+```
+
+# 3
+
+```{r}
+#define altered function
+runif_zx81_altered <- function(seed, n, min = 0, max = 1) {
+  
+  # Set the a and m parameters as specified.
+  a <- 66
+  m <- 401
+  
+  # Add warning messages in case the seed input is negative or larger than m.
+  if (seed < 0 | seed > m) {
+    stop("Error: seed should be positive and smaller than m")
+  }
+  
+  # Initialise an empty vector to save the draws, and save the start of the 
+  # sequence as the first draw. Hint: how do you access elements of vectors?
+  output <- c(seed)
+  
+  # Run a for loop to construct as many elements of the sequence as specified by
+  # the number of draws n.
+  current_element <- seed
+  while (length(output) <= n) {
+    current_element <- (current_element * a) %% m
+    output <- append(output, current_element)
+  }
+  
+  # Adjust the interval of your vector to run from min to max.
+  output <- output / m #normalisation
+  output * (max - min) + min #rescale and reposition
+  
+  # Return the vector of pseudorandom numbers.
+  output
+}
+
+#generate 1000 samples
+random_draws_q3 <- runif_zx81_altered(seed = 114, n = 1000)
+
+#split into 2 vectors
+U1 <- c()
+U2 <- c()
+for (i in 1:1000) {
+  if ((i %% 2) == 1) {
+    U1 <- append(U1, random_draws_q3[i])
+  } else {
+    U2 <- append(U2, random_draws_q3[i])
+  }
+}
+
+#scatter plot
+tibble(x = U1, y = U2) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_point()
+```
+
+There exists dependence between out pseudo-random draws. As suggested by Marsaglia 1968, early random number generating algorithms only fills in a subspace of the full space.
