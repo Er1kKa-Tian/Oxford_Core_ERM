@@ -11,3 +11,72 @@ rm(list = ls()) # clear variables
 ```
 
 # Question 1
+
+## a
+
+$$
+\left\{ x_n\right\}: x_{n+1} = 75\times x_n ~~ \text{mod} ~~ \left(2^{16} +1\right)
+$$
+
+```{r}
+seed <- 42
+print((75 * seed) %% (2 ^ 16 + 1))
+```
+
+## b
+
+To map $x$ to \[0,1\]: $$y = \frac{x}{2^{16} + 1}$$
+
+To map $x$ to \[3,5\]: $$y = \frac{x}{2^{16} + 1}\times 2 + 3$$
+
+## c
+
+```{r}
+runif_zx81 <- function(seed, n, min = 0, max = 1) {
+  
+  # Set the a and m parameters as specified.
+  a <- 75
+  m <- 2 ^ 16 + 1
+  
+  # Add warning messages in case the seed input is negative or larger than m.
+  if (seed < 0 | seed > m) {
+    stop("Error: seed should be positive and smaller than m")
+  }
+  
+  # Initialise an empty vector to save the draws, and save the start of the 
+  # sequence as the first draw. Hint: how do you access elements of vectors?
+  output <- c(seed)
+  
+  # Run a for loop to construct as many elements of the sequence as specified by
+  # the number of draws n.
+  current_element <- seed
+  while (length(output) <= n) {
+    current_element <- (current_element * a) %% m
+    output <- append(output, current_element)
+  }
+  
+  # Adjust the interval of your vector to run from min to max.
+  output <- output / m #normalisation
+  output * (max - min) + min #rescale and reposition
+  
+  # Return the vector of pseudorandom numbers.
+  output
+}
+```
+
+```{r}
+library(tidyverse)
+tibble(x = runif_zx81(seed = 114, n = 1000)) |>
+  ggplot(aes(x = x)) +
+  geom_histogram()
+```
+
+# Question 2
+
+## a
+
+```{r}
+rnorm_zx81 <- \() {
+  
+}
+```
