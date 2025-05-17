@@ -616,6 +616,18 @@ Setting the seed:
 set.seed(114514)
 ```
 
+## Random Number Generating Algorithm
+
+**Lehmer Random Number Generator**:
+
+-   Choose integer $m,a$ where $m>0, 0<a<m$
+
+-   Choose integer seed/starting value $x_0$ where $0< x_0 < m$
+
+-   Construct the sequence $\left\{ x_n \right\}$ according to:$$x_{n+1} = ax_n ~~ \text{mod} ~~ m$$
+
+-   $\left\{ x_n/m \right\}\approx$ sequence of iid U\[0,1\] draws
+
 ## d/p/q/r of A Distribution
 
 -   Base R has functions for many common RVs
