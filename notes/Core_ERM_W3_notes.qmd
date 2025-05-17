@@ -3,6 +3,8 @@ title: "Core_ERM_W3_notes"
 author: "Er1kKa"
 format: pdf
 editor: visual
+header-includes:
+  - \usepackage{mhchem}
 ---
 
 ```{r}
@@ -104,4 +106,207 @@ ggplot(mydat, aes(x, y)) +
               )
 ```
 
-## 
+# Week 3 Part 2: Selection on Observables
+
+## Potential Outcomes Framework
+
+-   Binary **treatment**:$$D \in \left\{ 0, 1 \right\} $$
+-   **Observed outcome** $Y$ depends on **potential outcomes** $(Y_{0}, Y_{1})$ and can be denoted:$$\begin{align}
+    Y &  = (1-D) Y_{0} + DY_{1} \\
+     & = Y_{0} + D(Y_{1} - Y_{0})
+    \end{align}$$
+
+## Treatment Effects and Fundamental Fundamental Problem of Causal Inference
+
+-   **Average Treatment Effect (ATE)**:$$ATE \equiv \mathbb{E}\left[ Y_{1} - Y_{0} \right] $$
+
+-   **Average Treatment Effect on the Treated (TOT/ATT)**:$$TOT\equiv ATT\equiv \mathbb{E}\left[ Y_{1} - Y_{0}|D=1 \right] $$
+
+-   **Conditional Average Treatment Effect (CATE)**:$$CATE \equiv \mathbb{E}\left[ Y_{1}-Y_{0}|X=x \right] $$
+
+-   **Fundamental Problem of Causal Inference**: we can never observe both $Y_{0}$ and $Y_{1}$ at the same for the same person $\implies$ we cannot learn the joint distribution of the potential outcomes
+
+## Naive Comparison of Means and Selection Bias
+
+-   It can be shown that:$$\underbrace{ \mathbb{E}\left[ Y|D=1 \right] - \mathbb{E}\left[ Y|D=0 \right] }_{ \text{Observed Difference} } = \underbrace{ \mathbb{E}\left[ Y_{1}-Y_{0}|D=1 \right] }_{ ATT/TOT } + \underbrace{ \mathbb{E}\left[ Y_{0}|D=1 \right] - \mathbb{E}\left[ Y_{0}|D=0 \right] }_{ \text{Selection Bias} }  $$
+-   Issues:
+    -   Selection bias $\neq 0 \implies$ Observed difference $\neq$ ATT/TOT
+    -   Selection on gains $\implies$ ATT/TOT $\neq$ ATE
+
+## Randomisation
+
+Random assignment of treatment ensures:$$D \statindep (Y_{0},Y_{1})$$ This implies: - No selection bias - $TOT = ATE$ $\implies$ Observed difference = ATE
+
+However, in reality, it's often impossible to have random assignment.
+
+## Retrieve Causal Effects without Randomisation
+
+### 2 Key Assumptions
+
+-   **Selection on Observables**: conditioning on observed characteristics $X$, treatment is independent of potential outcomes:$$D \statindep (Y_{0},Y_{1})|X$$
+
+-   **Overlap/Common Support**: there are treated and untreated samples for all possible values of $X$:$$0< P(X) < 1$$
+
+Whether those assumptions are plausible?
+
+-   Selection on observables cannot be tested without additional assumptions or data.
+
+-   Common support can be checked.
+
+If add more characteristics to $X$, then it's more likely to satisfy Selection on Observables but less likely to satisfy Common Support.
+
+-   Caveat: adding more controls is not always better --- beware of the Bad Controls! (W3P3)
+
+### Method 1: Regression Adjustment
+
+**Basic Idea**
+
+1.  Compute CATE for each possible $X$:$$CATE(x) = \mathbb{E}\left[ Y|D=1,X=x \right] - \mathbb{E}\left[ Y|D=0, X=x \right]  $$
+2.  Get ATE using LIE:$$ATE = \int_{x} CATE(x) \, dF(x) $$
+
+**Implementation** Assume all covariates are binary. 1. Center all covariates $X$ around their means:$$\tilde{X} \equiv X - \overline{X}$$ 2. Regress $Y$ on $D, \tilde{X}$ and all interactions 3. The coefficient on $D$ the ATE with correct SE
+
+### Method 2: Propensity Score Re-weighting
+
+Idea: upweight under-represented groups
+
+**Propensity Score Re-weighting**:$$ATE = \mathbb{E}\left[ \underbrace{ \frac{D}{P(X)} }_{ w_{1} } \cdot Y \right] - \mathbb{E}\left[ \underbrace{ \frac{1-D}{1-P(X)} }_{ w_{0} }\cdot Y \right] $$
+
+## An Example
+
+```{r}
+.rs.restartR() #restrat R session
+```
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+library(tidyverse)
+
+#generate example data
+people <- c("Aiden", "Bella", "Carter", "Dakota", "Ethel", "Floyd",
+"Gladys", "Herbert", "Irma", "Julius")
+x <- c("young", "young", "young", "young", "old", "old",
+"old", "old", "old", "old")
+y0 <- c(1, 1, 1, 1, 0, 0, 0, 0, 0, 0)
+y1 <- c(1, 1, 1, 1, 1, 0, 0, 1, 0, 0)
+d <- c(0, 0, 0, 1, 0, 0, 0, 1, 1, 1)
+y <- (1- d) * y0 + d * y1
+
+tbl <- tibble(name = people, d, y, y0, y1, x)
+rm(y0, y1, d, y, x, people)
+
+tbl
+```
+
+```{r}
+ATE <- tbl |>
+  summarise(mean(y1 - y0)) |>
+  pull()
+
+ATE
+```
+
+```{r}
+TOT <- tbl |>
+  filter(d == 1) |>
+  summarise(mean(y1 - y0)) |>
+  pull()
+
+TOT
+```
+
+```{r}
+selection_bias <- tbl |>
+  group_by(d) |>
+  summarise(y0_mean = mean(y0)) |>
+  pull(y0_mean) |>
+  diff()
+
+selection_bias
+```
+
+```{r}
+means <- tbl |>
+  group_by(d) |>
+  summarise(y_mean = mean(y))
+
+means
+```
+
+```{r}
+naive_diff_in_means <- means |>
+  pull(y_mean) |>
+  diff()
+
+naive_diff_in_means
+```
+
+```{r}
+# CATE
+tbl |>
+  group_by(x) |>
+  summarise(CATE = mean(y1 - y0))
+```
+
+```{r}
+# ATE by LIE
+
+group_stats <- tbl |>
+  group_by(x) |>
+  summarise(CATE_x = mean(y1 - y0), count = n()) |>
+  mutate(p_x = count / sum(count))
+
+group_stats |>
+  summarise(sum(CATE_x * p_x)) |>
+  pull()
+```
+
+```{r}
+# Regression adjustment
+library(broom)
+tbl |>
+  mutate(old = (x == "old"), xtilde = old - mean(old)) |>
+  lm(y ~ d *xtilde, data = _) |>
+  tidy() |>
+  filter(term == "d")
+```
+
+```{r}
+# Propensity score re-weighting
+
+psw <- tbl |>
+  group_by(x) |>
+  mutate(pscore = mean(d)) |>
+  ungroup() |>
+  mutate(
+    weight1 = d / pscore,
+    weight0 = (1 - d) / (1 - pscore)
+  )
+
+psw |>
+  summarise(mean(weight1 * y) - mean(weight0 * y)) |>
+  pull()
+```
+
+## Further Discussions
+
+### ATE or TOT?
+
+Do we want ATE?
+
+-   TOT/ATT is the average effect of a treatment for people who *voluntarily* take it.
+
+Can we get ATE?
+
+-   We often have selection on observables if we assume rational choice.
+
+### Identifying TOT with Weaker Assumptions
+
+Weaker assumptions: - Treatment provides no information on $Y_{0}$ given $X$:$$\mathbb{E}\left[ Y_{0}|D,X \right]  = \mathbb{E}\left[ Y_{0}|X \right] $$ - Existence of not-treated samples:$$Pr(x) <1 \ \forall\ x \in \text{support}(X)$$
+
+Under those 2 assumptions:$$TOT/ATT = \mathbb{E}\left[ Y|D=1 \right] - \mathbb{E}_{X|D=1}\left[ Y|D=0,X \right] $$
