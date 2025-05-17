@@ -310,3 +310,175 @@ Can we get ATE?
 Weaker assumptions: - Treatment provides no information on $Y_{0}$ given $X$:$$\mathbb{E}\left[ Y_{0}|D,X \right]  = \mathbb{E}\left[ Y_{0}|X \right] $$ - Existence of not-treated samples:$$Pr(x) <1 \ \forall\ x \in \text{support}(X)$$
 
 Under those 2 assumptions:$$TOT/ATT = \mathbb{E}\left[ Y|D=1 \right] - \mathbb{E}_{X|D=1}\left[ Y|D=0,X \right] $$
+
+# Week 3 Part 3: DAGs and Bad Controls
+
+## "No causes in; no causes out."
+
+-   We cannot simply control for any observed variable that is correlated with both treatment and outcome.
+
+-   Meaningful causal inference always requires assumptions, even in RCTs.
+
+-   Causal inference from observational data requires even more assumptions.
+
+-   However, if you make your assumptions explicit, there is a definite answer:
+
+    -   If it's possible to use selection-on-observables, then we can find the correct controls.
+
+    -   If it's not possible, we can show why.
+
+## Graphs and DAGs
+
+### Basic Concepts
+
+-   Concepts in a graph
+
+    -   **Graph**: set of nodes connected by edges.
+
+    -   Two nodes are **adjacent** if connected by an edge.
+
+    -   Directed edge points from **parent** to **child**.
+
+    -   **Directed graph** has only directed edges.
+
+    -   **Path**: sequence of connected vertices.
+
+    -   **Directed path**: a path that "obeys one-way signs".
+
+    -   Directed path points from **ancestor** to **descendant**.
+
+    -   **Cycle**: directed path that returns to starting node.
+
+    -   **Acyclic cycle**: a graph without any cycles.
+
+-   Concepts in Directed Acyclic Graphs (**DAG**s)
+
+    -   If $D$ is ancestor of $Y$, it is a **potential cause** of $Y$.
+
+    -   If $D$ is a parent of $Y$, it is a **direct cause** of $Y$.
+
+### 4 Common Structures
+
+```{r}
+.rs.restartR() #restar R session
+```
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+library(tidyverse)
+library(ggdag)
+```
+
+#### Fork/Common Cause/Confounder
+
+```{r}
+dag_fork <- dagify(Y ~ X, D ~ X)
+
+ggdag(dag_fork) +
+  theme_dag()
+```
+
+-   Confounders are good controls!
+
+    -   $D$ and $Y$ are dependent because there is an open path between them.
+
+    -   However, $D$ does cause $Y$.
+
+    -   Therefore, we need to condition on $X$ to block the path from $D$ to $Y$.
+
+-   **Fork Rule**: if $X$ is a common cause of $D$ and $Y$, and there is only one path between $D$ and $Y$, then:$$D \statindep Y|X$$
+
+#### Pipe/Mediator
+
+```{r}
+dag_pipe <- dagify(Y ~ X, X ~ D)
+
+ggdag(dag_pipe) +
+  theme_dag()
+```
+
+-   Mediators are bad controls!
+    -   $D$ and $Y$ are dependent because there is an open path between them.
+    -   $D$ causes $Y$ through $X$
+    -   Conditioning on $X$ blocks the path from $D$ to $Y$
+-   **Pipe Rule**: if there is only one directed path from $D$ to $Y$ and $X$ intercepts the path, then:$$D\statindep Y|X$$
+
+#### Collider/Common Effect
+
+```{r}
+dag_collider <- dagify(X ~ D, X ~ Y)
+
+ggdag(dag_collider) +
+  theme_dag()
+```
+
+-   Common effects are bad controls!
+    -   $D$ and $Y$ are independent because the path between them is blocked.
+    -   $D$ and $Y$ both cause $X$, but neither causes the other.
+    -   Conditioning on $X$ *unblocks* the path between $D$ and $Y$
+-   **Collider Rule**: if there is only one path between $D$ and $Y$, and $X$ is their common effect, then:$$D\statindep Y ~ ~ \text{but} ~ ~ D \cancel\statindep Y |X$$
+
+#### Descendant
+
+```{r}
+# this is only an examle of descendant
+dag_descandant <- dagify(X ~ D, X ~ Y, Z ~ X)
+
+ggdag(dag_descandant) +
+  theme_dag()
+```
+
+-   Descendants are "addons" to a node. It can be added to all 3 scenarios above.
+-   Descendant has the same property as its parent.
+-   **Descendant Rule**: conditioning on a descendant $Z$ of $X$ has the same effect of partially conditioning on $X$ itself.
+
+## Graph Surgery
+
+### Causal and Non-causal Paths
+
+-   **Causal/Frontdoor Path**: directed path between the treatment and outcome; always starts with an edge pointing *out* of treatment.
+
+-   **Non-causal/Backdoor Path**: path between treatment and outcome; always starts with an edge pointing *into* treatment.
+
+### Observational and Interventional Distribution
+
+-   **Observational Distribution** $Pr(Y|D=d)$
+
+    -   This is the *actual* distribution of $Y$ among people observed to have $D=d$
+
+    -   DAG illustrates the observational distribution and how it arises from our causal model.
+
+-   **Interventional Distribution** $Pr(Y|do(D=d))$
+
+    -   This is the distribution of $Y$ we *would obtain* if we *intervened* and set $D=d$ for everyone.
+
+    -   We can obtain it from *removing edges pointing into* $D$ (i.e. removing all backdoor paths)
+
+    -   Causal effect of interest is the path from $D$ to $Y$ in this modified graph:$$ATE  = \mathbb{E}\left[ Y_{1} - Y_{0} \right] = \mathbb{E}\left[ Y|do(D=1) \right]  - \mathbb{E}\left[ Y|do(D=0) \right] $$
+
+    -   This is what an experiment does — removing all causes of treatment.
+
+## Backdoor Criterion
+
+### Backdoor Criterion
+
+-   Formal statement: a set of nodes $X$ satisfies the backdoor criterion relative to $(D,Y)$ if no node in $X$ is a descendant of $D$ and $X$ blocks every backdoor path between $D$ and $Y$.
+
+-   A more intuitive explanation:
+
+1.  list all the paths that cnonnect treatment and outcome
+2.  check which of them open (a path is open unless it contains a collider)
+3.  check which of them are backdoor paths (contain an arrow pointing at $D$)
+4.  if there are no open backdoor paths, then you are done. If not, look for nodes you can condition on to block remianing open backdoor paths without opening new ones.
+
+-   Note that: in a given DAG, there may ne multiple ways or no way to satisfy the backdoor criterion, given what we observe.
+
+### Equivalent to Selection on Observables
+
+-   If $X$ satisfies the backdoor criterion relative to $(D,Y)$, then:$$Pr(Y=y|do(D=d)) = \sum_{\text{all }x}Pr(Y=y|D=d,X=x)\cdot P(x=x)$$and we have the following counterfactual interpretation:$$Y_{d}\statindep D|X\ \forall\ d$$
+-   In other words, backdoor criterion implies selection on observables assumption for $D$ given $X$, and the formula above is essentially the regression adjustment.
