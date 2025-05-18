@@ -1,0 +1,236 @@
+---
+title: "PS2_Wells"
+format: html
+editor: visual
+---
+
+# Question 1
+
+```{r}
+.rs.restartR() #restart R session
+```
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+library(tidyverse)
+library(broom)
+library(margins)
+library(modelsummary)
+```
+
+## a
+
+```{r}
+wells <- read.csv("https://ditraglia.com/data/wells.csv")
+```
+
+## b
+
+```{r}
+wells <- wells |>
+  mutate(larsenic = log(arsenic))
+```
+
+## c
+
+```{r}
+wells |>
+  ggplot(aes(x = arsenic, y = larsenic)) +
+  geom_point() +
+  labs(
+    title = "Arsenic level of respondent’s well",
+    caption = "(100s of micrograms per liter))"
+  ) +
+  xlab("arsenic") +
+  ylab("log arsenic") +
+  theme_bw()
+```
+
+## d
+
+```{r}
+wells <- wells |>
+  mutate(dist100 = dist / 100)
+```
+
+## e
+
+```{r}
+wells <- wells |>
+  mutate(zeduc = (educ - mean(educ)) / sd(educ))
+```
+
+# Question 2
+
+## a
+
+```{r}
+fit1 <- glm(switch ~ dist100, family = binomial(link = "logit"), wells)
+
+summary(fit1)
+```
+
+## b
+
+```{r}
+ggplot(wells, aes(x = dist100, y = switch)) +
+  stat_smooth(method = "glm", method.args = list(family = binomial)) +
+  geom_jitter(width = 0.5, height = 0.1)
+```
+
+## c
+
+`dist100` is a significant predictor of `switch` at 5% SL.
+
+Its coefficient is negative, which makes sense because the farther from a safe well a household is, the more helpful a new well will be.
+
+## d
+
+```{r}
+predict(fit1,
+        newdata = data.frame(dist100 = mean(wells$dist100)),
+        type = "response")
+```
+
+## e
+
+```{r}
+# Average Marginal Effect
+summary(margins(fit1))$AME
+```
+
+```{r}
+# Marginal Effect at Average
+marginal_effects(fit1, data = data.frame(dist100 = mean(wells$dist100)))
+```
+
+A unit increase in `dist100` from its average is predicted to decrease the probability of building a new well by 0.1519011.
+
+In absolute value, this is larger than the average marginal effect (-0.149842).
+
+# Question 3
+
+## a
+
+```{r}
+wells <- wells |>
+  mutate(p1 = predict(fit1, newdata = data.frame(dist100), type = "response"))
+```
+
+## b
+
+```{r}
+wells <- wells |>
+  mutate(pred1 = ifelse(p1 > 0.5, 1, 0))
+```
+
+## c
+
+```{r}
+wells |>
+  mutate(success = (pred1 == switch)) |>
+  pull(success) |>
+  mean()
+```
+
+## d
+
+```{r}
+table(Predicted = wells$pred1, Actual = wells$switch)
+```
+
+## e
+
+$$
+\text{Sensitivity} = \frac{\text{True Positives (TP)}}{\text{True Positives (TP)} + \text{False Negatives (FN)}}
+$$
+
+```{r}
+1604 / (1604 + 1089)
+```
+
+$$
+\text{Specificity} = \frac{\text{True Negatives (TN)}}{\text{True Negatives (TN)} + \text{False Positives (FP)}}
+$$
+
+```{r}
+194 / (194 + 1089)
+```
+
+## f
+
+```{r}
+# construct null model
+
+# find the mode
+wells |>
+  group_by(switch) |>
+  summarise(obs = n())
+```
+
+```{r}
+# generate predictions in the null model
+wells <- wells |>
+  mutate(pred1_null = 1)
+```
+
+```{r}
+# confusion matrix for the null model
+table(Predicted = wells$pred1_null, Actual = wells$switch)
+```
+
+```{r}
+list(
+  accuracy = 1737 / (1283 + 1737),
+  sensitivity = 1737 / (1737 + 0),
+  specificity = 0 / (0 + 1283)
+)
+```
+
+The null model has lower accuracy, perfect sensitivity, and zero specificity.
+
+This illustrate the sensitivity-specificity trade-off.
+
+# Question 4
+
+## a
+
+```{r}
+fit2 <- glm(switch ~ larsenic, family = binomial(link = "logit"), data = wells)
+```
+
+## b
+
+```{r}
+fit3 <- glm(switch ~ zeduc, family = binomial(link = "logit"), data = wells)
+```
+
+## c
+
+```{r}
+fit4 <- glm(switch ~ dist100 + larsenic + zeduc, family = binomial(link = "logit"), data = wells)
+```
+
+## d
+
+```{r}
+all_regressions = list(fit1, fit2, fit3, fit4)
+
+modelsummary(all_regressions,
+             fmt = 2,
+             stars = TRUE,
+             title = "All Logit Model Estimates")
+```
+
+# Question 5
+
+## a
+
+```{r}
+
+```
