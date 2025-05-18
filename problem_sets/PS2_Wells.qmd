@@ -80,7 +80,7 @@ summary(fit1)
 ```{r}
 ggplot(wells, aes(x = dist100, y = switch)) +
   stat_smooth(method = "glm", method.args = list(family = binomial)) +
-  geom_jitter(width = 0.5, height = 0.1)
+  geom_jitter(width = 0.2, height = 0.1)
 ```
 
 ## c
@@ -232,5 +232,90 @@ modelsummary(all_regressions,
 ## a
 
 ```{r}
-
+summary(fit2)
 ```
+
+```{r}
+ggplot(wells, aes(x = larsenic, y = switch)) +
+  stat_smooth(method = "glm", method.args = list(family = binomial)) +
+  geom_jitter(width = 0.2, height = 0.1)
+```
+
+`larsenic` is a significant predictor at 5% SL. The sign is positive which makes sense — as the water in the well gets more poisonous, it's more likely for a household to switch.
+
+## b
+
+```{r}
+summary(fit3)
+```
+
+```{r}
+ggplot(wells, aes(x = zeduc, y = switch)) +
+  stat_smooth(method = "glm", method.args = list(family = binomial)) +
+  geom_jitter(width = 0.2, height = 0.1)
+```
+
+`zeduc` is a significant predictor at 5% SL. The sign is positive which makes sense — more educated households are more likely to be aware of the water quality problem, and hence morel likely to switch.
+
+## c
+
+```{r}
+marginal_effects(fit4,
+                 data = wells |> 
+                   summarise(
+                     across(
+                       c(dist100, larsenic, zeduc),
+                       mean,
+                       .names = "{.col}")
+                     )
+                 )
+```
+
+Those are the marginal effects on predicted switching probability at the average value of those variables.
+
+# Question 6
+
+## a
+
+```{r}
+# Generate p4
+wells <- wells |>
+  mutate(p4 = predict(
+    fit4,
+    newdata = data.frame(
+      dist100 = dist100,
+      larsenic = larsenic,
+      zeduc = zeduc
+    ),
+    type = "response"
+  ))
+```
+
+```{r}
+# Generate pred4
+wells <- wells |>
+  mutate(pred4 = ifelse(p4 > 0.5, 1, 0))
+```
+
+```{r}
+# accuracy
+wells |>
+  summarise(accuracy = mean(ifelse(pred4 == switch, 1, 0)))
+```
+
+```{r}
+# confusion matrix
+table(Predict = wells$pred4, Actual = wells$switch)
+```
+
+```{r}
+# sensitivity, specificity
+list(
+  sensitivity = 1358 / (1358 + 379),
+  specificity = 546 / (546 + 737)
+)
+```
+
+## b
+
+In our sample, `fit4` has higher accuracy, sensitivity, and specificity than `fit1`.
