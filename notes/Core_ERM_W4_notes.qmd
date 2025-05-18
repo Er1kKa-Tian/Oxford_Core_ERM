@@ -1,0 +1,221 @@
+---
+title: "Core_ERM_W4_notes"
+format: pdf
+editor: visual
+---
+
+# Week 4 Part 1: The Multivariate Normal Distribution
+
+```{r}
+.rs.restartR() #restart R session
+```
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+## Generating Correlated Normal Draws
+
+### Start with Independent Standard Normals
+
+```{r}
+# creat matrix z such that each row represents a draw of the random vector (Z1, Z2)
+set.seed(1145)
+n <- 1e5
+z1 <- rnorm(n)
+z2 <- rnorm(n)
+z <- cbind(z1, z2)
+rm(z1, z2)
+head(z)
+```
+
+```{r}
+# sample mean
+colMeans(z)
+```
+
+```{r}
+# var-cov matrix
+var(z)
+```
+
+```{r}
+# correlation matrix
+cor(z)
+```
+
+### Visualising Marginal Distributions
+
+-   Method 1: using histograms with simulated data
+
+```{r}
+library(tidyverse)
+library(patchwork)
+
+z1_hist <- as_tibble(z) |>
+  ggplot(aes(x = z1)) +
+  geom_histogram(fill = "red", alpha = 0.3)
+
+z2_hist <- as_tibble(z) |>
+  ggplot(aes(x = z2)) +
+  geom_histogram(fill = "blue", alpha = 0.3)
+
+z1_hist + z2_hist
+```
+
+-   Method 2: using KDE and simulated data
+
+```{r}
+z1_dens <- as_tibble(z) |>
+  ggplot(aes(x = z1)) +
+  geom_density(fill = "red", alpha = 0.3)
+
+z2_dens <- as_tibble(z) |>
+  ggplot(aes(x = z2)) +
+  geom_density(fill = "blue", alpha = 0.3)
+
+z1_dens + z2_dens
+```
+
+### Visualising Joint Distribution
+
+```{r}
+as_tibble(z) |>
+  ggplot(aes(x = z1, y = z2)) +
+  geom_density2d_filled() +
+  coord_fixed()
+```
+
+### Change Means
+
+```{r}
+# shift means from (0, 0) to (1, -1)
+x <- cbind(x1 = z[,1] + 1,
+           x2 = z[,2] - 1)
+
+x_marginals <- ggplot(as_tibble(x)) +
+  geom_density(aes(x = x1),
+               fill = "red",
+               alpha = 0.3) +
+  geom_density(aes(x = x2),
+               fill = "blue",
+               alpha = 0.3) +
+  xlab("")
+
+x_joint <- ggplot(as_tibble(x)) +
+  geom_density2d_filled(aes(x = x1, y = x2)) +
+  coord_fixed()
+
+x_marginals + x_joint
+```
+
+### Change Variances
+
+-   To change the variances of $Z_1$ and $Z_2$ without creating any covariance between them, multiply each by a constant:
+
+```{r}
+# change variance from (1, 1) to (4, 25)
+x <- cbind(
+  x1 = 2 * z[,1],
+  x2 = 5 * z[,2]
+)
+
+cov(x)
+```
+
+```{r}
+x_marginals <- ggplot(as_tibble(x)) +
+  geom_density(aes(x = x1),
+               fill = "red",
+               alpha = 0.3) +
+  geom_density(aes(x = x2),
+               fill = "blue",
+               alpha = 0.3) +
+  xlab("")
+
+x_joint <- ggplot(as_tibble(x)) +
+  geom_density2d_filled(aes(x = x1, y = x2)) +
+  coord_fixed()
+
+x_marginals + x_joint
+```
+
+### Create Correlations by Combining Z1Z2
+
+-   Construct $X_1$ and $X_2$ as linear combinations of $(Z_1, Z_2)$:
+
+```{r}
+x <- cbind(
+  x1 = 2 * z[,1] + z[,2],
+  x2 = z[,1] + 4 * z[,2]
+)
+```
+
+```{r}
+cov(x)
+```
+
+```{r}
+cor(x)
+```
+
+-   Now the ellipses are tilted rather than axis-aligned:
+
+```{r}
+x_marginals <- ggplot(as_tibble(x)) +
+  geom_density(aes(x = x1),
+               fill = "red",
+               alpha = 0.3) +
+  geom_density(aes(x = x2),
+               fill = "blue",
+               alpha = 0.3) +
+  xlab("")
+
+x_joint <- ggplot(as_tibble(x)) +
+  geom_density2d_filled(aes(x = x1, y = x2)) +
+  coord_fixed()
+
+x_marginals + x_joint
+```
+
+-   We can also generate the same sample using matrix multiplication:
+
+```{r}
+A <- matrix(
+  c(2, 1,
+    1, 4),
+  2, 2,
+  byrow = TRUE
+)
+
+x_alt <- t(A %*% t(z)) #t() is transposing; %*% is matrix multiplication
+
+colnames(x_alt) <- c("x1", "x2")
+identical(x, x_alt)
+```
+
+### Notations
+
+-   Let $Z$ be a vector of $p$ iid standard normal RVs
+-   Let $A$ be a $(p \times p)$ matrix of constants
+-   Let $c$ be a $(p\times1)$ vector of constants
+-   Then, $X = (c+AZ)$ is a multivariate normal RV
+
+## The Cholesky Decomposition
+
+-   Let $M$ be a symmetric and positive definite matrix, then:$$\exists A ~~\text{s.t.}~~ \Sigma =  A A^{T}$$
+-   However, that $A$ is not unique. To make it unique, we can further focus on lower triangular matrices:$$\exists L~ \text{(lower triangular)} ~~\text{s.t.}~~ \Sigma = L L^{T}$$which is known as **Cholesky Decomposition**
+-   Example:
+
+```{r}
+Sigma <- matrix(
+  c(1, 0.5,
+    0.5, 1),
+  2, 2,
+  byrow = TRUE
+)
+
+chol(Sigma)
+```
