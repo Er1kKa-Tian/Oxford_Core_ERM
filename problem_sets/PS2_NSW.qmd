@@ -13,6 +13,7 @@ rm(list = ls()) # clear variables
 ```{r}
 library(tidyverse)
 library(haven)
+library(modelsummary)
 ```
 
 # Question 1
@@ -58,14 +59,15 @@ experimental <- experimental |>
 experimental <- experimental |>
   mutate(
     employment74 = ifelse(earnings74 == 0, "unemployed", "employed"),
-    employment75 = ifelse(earnings75 == 0, "unemployed", "employed")
+    employment75 = ifelse(earnings75 == 0, "unemployed", "employed"),
+    employment78 = ifelse(earnings78 == 0, "unemployed", "employed")
   )
 ```
 
 ## e
 
 ```{r}
-experiment <- experimental |>
+experimental <- experimental |>
   select(-black, -hispanic, -nodegree, -married, -data_id)
 ```
 
@@ -94,7 +96,8 @@ cleanup <- function(data) {
   data <- data |>
   mutate(
     employment74 = ifelse(earnings74 == 0, "unemployed", "employed"),
-    employment75 = ifelse(earnings75 == 0, "unemployed", "employed")
+    employment75 = ifelse(earnings75 == 0, "unemployed", "employed"),
+    employment78 = ifelse(earnings78 == 0, "unemployed", "employed")
   )
   
   data <- data |>
@@ -109,5 +112,126 @@ cleanup <- function(data) {
 ## a
 
 ```{r}
-
+experimental |>
+  select(is.double) |>
+  datasummary_skim()
 ```
+
+```{r}
+experimental |>
+  select(is.character) |>
+  datasummary_skim()
+```
+
+## b
+
+```{r}
+experimental |>
+  datasummary_balance(~ treat, data = _)
+```
+
+Characteristics are balanced, but observations are unbalanced.
+
+## c
+
+```{r}
+experimental_result <- experimental |>
+  mutate(employed78 = ifelse(employment78 == "employed", 1, 0)) |>
+  group_by(treat) |>
+  summarise(empRate78 = mean(employed78), sd = sd(employed78), obs = n())
+
+experimental_result
+```
+
+$$
+SE(\hat{ATE}) = \sqrt{\frac{SE(\bar{Y}_\text{treat})^2}{n_\text{treat}} + \frac{SE(\bar{Y}_\text{control})^2}{n_\text{control}}}
+$$
+
+```{r}
+# SE
+se <- sqrt(
+  ((experimental_result$sd[1]) ^ 2 / experimental_result$obs[1])
+  + ((experimental_result$sd[2]) ^ 2 / experimental_result$obs[2])
+)
+```
+
+```{r}
+# 95% CI
+list(
+  diff(experimental_result$empRate78) + 1.96 * se,
+  diff(experimental_result$empRate78) - 1.96 * se
+)
+```
+
+```{r}
+rm(se)
+```
+
+# Question 3
+
+## a
+
+```{r}
+cps_controls <- read_dta("https://users.nber.org/~rdehejia/data/cps_controls.dta")
+```
+
+## b
+
+```{r}
+cps_controls <- cleanup(cps_controls)
+```
+
+## c
+
+```{r}
+composite <- experimental |>
+  filter(treat == "treated") |>
+  bind_rows(cps_controls)
+```
+
+## d
+
+```{r}
+composite |>
+  datasummary_balance(~ treat, data = _)
+```
+
+## e
+
+Characteristics are unbalanced across groups. Without randomisation, the naive difference in means no longer identifies ATE.
+
+# Question 4
+
+## a
+
+```{r}
+composite
+```
+
+```{r}
+summary(lm(earnings78 ~ . , data = composite))
+```
+
+## b
+
+Conditions:
+
+1.  selection on observables
+2.  homogeneous treatment effects
+
+## c
+
+$$\mathbb{E}\left[ Y|D,X \right] = \alpha_{D} + X^{T}\beta_{D} $$
+
+$$\begin{align}
+ATE  & =  \mathbb{E}\left[ Y_{1}- Y_{0} \right] \\
+ & = \mathbb{E}\left[  \mathbb{E}\left[ Y_{1}- Y_{0} |X\right] |X \right] \\
+ & = \mathbb{E}\left[ [\alpha_{1} - \alpha_{0} + X(\beta_{1} - \beta_{0}) ]|X\right] \\
+ & = \alpha_{1}- \alpha_{0} + \mathbb{E}\left[ X \right] ^{T}(\beta_{1}- \beta_{0})
+\end{align}$$
+
+Regression: - Estimate regression $Y = \alpha + X^{T}\beta$ for the control and treated group separately and get $\widehat{ \alpha_{0} }, \widehat{ \alpha_{1} }, \widehat{ \beta_{0} }, \widehat{ \beta_{1} }$ - Compute$$\widehat{ ATE } = \widehat{ \alpha_{1} } - \widehat{ \alpha_{0} } + \overline{X}^{T} \left( \widehat{ \beta_{1} } - \widehat{ \beta_{0} } \right) $$
+
+This accounts for heterogeneity in treatment effects varying across $X$.
+
+# Question 5
