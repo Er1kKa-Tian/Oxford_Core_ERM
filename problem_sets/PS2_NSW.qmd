@@ -1,0 +1,113 @@
+---
+title: "PS2_NSW"
+format: pdf
+editor: visual
+---
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+library(tidyverse)
+library(haven)
+```
+
+# Question 1
+
+## a
+
+```{r}
+experimental <- read_dta("https://users.nber.org/~rdehejia/data/nsw_dw.dta")
+```
+
+## b
+
+```{r}
+experimental <- experimental |>
+  rename(earnings74 = re74, earnings75 = re75, earnings78 = re78)
+```
+
+## c
+
+```{r}
+experimental <- experimental |>
+  mutate(race = case_when(
+    black == 1 ~ "black",
+    hispanic == 1 ~ "hispanic",
+    .default = "white"
+  ))
+```
+
+## d
+
+```{r}
+experimental <- experimental |>
+  mutate(
+    treat = ifelse(treat == 1, "treated", "control"),
+    degree = ifelse(nodegree == 0, "highshcool or above", "no highschool"),
+    marriage = ifelse(married == 1, "married", "unmarried")
+  )
+```
+
+## e
+
+```{r}
+experimental <- experimental |>
+  mutate(
+    employment74 = ifelse(earnings74 == 0, "unemployed", "employed"),
+    employment75 = ifelse(earnings75 == 0, "unemployed", "employed")
+  )
+```
+
+## e
+
+```{r}
+experiment <- experimental |>
+  select(-black, -hispanic, -nodegree, -married, -data_id)
+```
+
+## ex
+
+```{r}
+cleanup <- function(data) {
+  
+  data <- data |>
+  rename(earnings74 = re74, earnings75 = re75, earnings78 = re78)
+  
+  data <- data |>
+  mutate(race = case_when(
+    black == 1 ~ "black",
+    hispanic == 1 ~ "hispanic",
+    .default = "white"
+  ))
+  
+  data <- data |>
+  mutate(
+    treat = ifelse(treat == 1, "treated", "control"),
+    degree = ifelse(nodegree == 0, "highshcool or above", "no highschool"),
+    marriage = ifelse(married == 1, "married", "unmarried")
+  )
+  
+  data <- data |>
+  mutate(
+    employment74 = ifelse(earnings74 == 0, "unemployed", "employed"),
+    employment75 = ifelse(earnings75 == 0, "unemployed", "employed")
+  )
+  
+  data <- data |>
+  select(-black, -hispanic, -nodegree, -married, -data_id)
+  
+  data
+}
+```
+
+# Question 2
+
+## a
+
+```{r}
+
+```
