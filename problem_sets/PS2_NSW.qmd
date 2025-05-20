@@ -14,6 +14,8 @@ rm(list = ls()) # clear variables
 library(tidyverse)
 library(haven)
 library(modelsummary)
+library(broom)
+library(patchwork)
 ```
 
 # Question 1
@@ -235,3 +237,66 @@ Regression: - Estimate regression $Y = \alpha + X^{T}\beta$ for the control and 
 This accounts for heterogeneity in treatment effects varying across $X$.
 
 # Question 5
+
+```{r}
+logit_data <- composite |>
+  mutate(treatment_binary = ifelse(treat == "treated", 1, 0))
+```
+
+```{r}
+propensity_score_fit <- glm(treatment_binary ~ . - treat - employment78,
+    family = binomial(link = "logit"),
+    data = logit_data)
+  
+summary(propensity_score_fit)
+```
+
+```{r}
+logit_data_augmented <- augment(propensity_score_fit, type.predict = "response")
+```
+
+## b
+
+```{r}
+propScore_treated_hist <- logit_data_augmented |>
+  filter(treat == "treated") |>
+  ggplot(aes(x = .fitted)) +
+  geom_histogram(fill = "red", alpha = 0.3)
+
+propScore_untreated_hist <- logit_data_augmented |>
+  filter(treat == "control") |>
+  ggplot(aes(x = .fitted)) +
+  geom_histogram(fill = "blue", alpha = 0.3)
+
+propScore_treated_hist + propScore_untreated_hist
+```
+
+The control group has a distribution strongly skewed to the left, accumulating around 0 while the distribution for the treated is more dispersed.
+
+The control group also has a much larger sample size.
+
+## c
+
+```{r}
+logit_data_augmented <- logit_data_augmented |>
+  mutate(w1 = treatment_binary / .fitted,
+         w0 = (1 - treatment_binary) / (1 - .fitted)) |>
+  mutate(employment78_binary = ifelse(employment78 == "employed", 1, 0))
+
+logit_data_augmented |>
+  summarise(mean(w1 * employment78_binary) - mean(w0 * employment78_binary)) |>
+  pull()
+```
+
+## d
+
+```{r}
+logit_data_augmented |>
+  filter(0.1 < .fitted & .fitted < 0.9) |>
+  summarise(mean(w1 * employment78_binary) - mean(w0 * employment78_binary)) |>
+  pull()
+```
+
+## e
+
+When the propensity score is very small (around 0), the weight $w_1$ will be super large, and the same logic applies to very large propensity scores — then they are around 1, $w_1$ gets super large. Those distort our estimation of ATE.
