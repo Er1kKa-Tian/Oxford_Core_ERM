@@ -1,13 +1,13 @@
 ---
 title: "PS2_Wells"
-format: html
+format: pdf
 editor: visual
 ---
 
 # Question 1
 
 ```{r}
-.rs.restartR() #restart R session
+#.rs.restartR() #restart R session
 ```
 
 ```{r}

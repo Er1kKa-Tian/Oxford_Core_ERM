@@ -225,12 +225,12 @@ Conditions:
 
 $$\mathbb{E}\left[ Y|D,X \right] = \alpha_{D} + X^{T}\beta_{D} $$
 
-$$\begin{align}
+\begin{align}
 ATE  & =  \mathbb{E}\left[ Y_{1}- Y_{0} \right] \\
  & = \mathbb{E}\left[  \mathbb{E}\left[ Y_{1}- Y_{0} |X\right] |X \right] \\
  & = \mathbb{E}\left[ [\alpha_{1} - \alpha_{0} + X(\beta_{1} - \beta_{0}) ]|X\right] \\
  & = \alpha_{1}- \alpha_{0} + \mathbb{E}\left[ X \right] ^{T}(\beta_{1}- \beta_{0})
-\end{align}$$
+\end{align}
 
 Regression: - Estimate regression $Y = \alpha + X^{T}\beta$ for the control and treated group separately and get $\widehat{ \alpha_{0} }, \widehat{ \alpha_{1} }, \widehat{ \beta_{0} }, \widehat{ \beta_{1} }$ - Compute$$\widehat{ ATE } = \widehat{ \alpha_{1} } - \widehat{ \alpha_{0} } + \overline{X}^{T} \left( \widehat{ \beta_{1} } - \widehat{ \beta_{0} } \right) $$
 
