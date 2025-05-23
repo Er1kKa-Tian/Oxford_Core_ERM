@@ -257,7 +257,9 @@ rm(list = ls()) # clear variables
 
 ### Types of Individuals
 
-4 types of individuals $t \in \left\{ n, a, c,d \right\}$: - Always takers (n) $$D_{1i}=D_{0i}=1$$ - Never takers (a) $$D_{1i}=D_{0i}=0$$ - Compliers (c) $$D_{1i}=1, D_{0i}=0$$ - Defiers (d) $$D_{1i}=0, D_{0i}=1$$
+4 types of individuals $t \in \left\{ n, a, c,d \right\}$:
+
+\- Always takers (a) $$D_{1i}=D_{0i}=1$$ - Never takers (n) $$D_{1i}=D_{0i}=0$$ - Compliers (c) $$D_{1i}=1, D_{0i}=0$$ - Defiers (d) $$D_{1i}=0, D_{0i}=1$$
 
 ### LATE
 
@@ -266,5 +268,15 @@ Y_{11i}=Y_{10i}=Y_{1i}\\Y_{01i}=Y_{00i}=Y_{0i}
 \end{cases}$$ - Implication: we have the usual expression for observed outcomes: $$Y_{i}=D_{i}Y_{1i}+(1-D_{i})Y_{0i}=\underbrace{ \mathbb{E}[Y_{0i}] }_{ \alpha }+(\underbrace{ Y_{1i}-Y_{0i} }_{ \beta })D_{i}+(\underbrace{ Y_{0i}-\mathbb{E}[Y_{0i}] }_{ u_{i} })$$ - **Monotonocity** (No defiers*): increasing IV may induce some untreated individuals to take treatment, but cannot induce any treated individuals to leave treatment:*$$D_{1i}\geq D_{0i}\ \forall\ i$$ - **Relevance** (IV induces variation in the treatment\*): IV needs to induce variations in treatment indicator:$$\mathbb{E}[D_{1i}-D_{0i}]\neq 0$$ - This is satisfied if individuals with $Z_{i}=1$ are more likely to participate:$$P(D_{1i}=1)=\mathbb{E}[D_{1i}]>\mathbb{E}[D_{0i}]=P(D_{0i}=1)$$
 
 Under those 4 assumptions, Wald estimator identifies **Local Average Treatment Effect** (ATE on compliers):$$LATE \equiv \mathbb{E}[Y_{1i}-Y_{0i}|D_{1i}>D_{0i}]$$is the average treatment effect for those who are induced to take the treatment when the IV is increased (**treatment effect for the compliers only**) - *Under independence + exclusion + monotonicity + relevance, Wald Estimand identifies LATE*:$$\beta_{Wald}=LATE\ \begin{cases}=ATE=ATT & \text{if Homogeous TE}\\\neq ATE\ or\ ATT & \text{if Heterogenous TE}  \end{cases} $$ - LATE is a **local effect** (only in complier group) - different instruments identify different LATE (we need policy relevant instrument)
+
+### Strong Assumptions?
+
+-   LATE assumptions are actually equivalent to:$$\begin{cases}
+    Y_{0} & = \mu_{0} + U_{0} \\
+    Y_{1} & = \mu_{1} + U_{1} \\
+    D & = \mathbb{1}\left\{ \alpha_{0} + \alpha_{1}Z>V \right\}
+    \end{cases}$$and$$Y = (1-D)Y_{0} + DY_{1}, ~ ~ \mathbb{E}\left[ U_{0} \right] = \mathbb{E}\left[ U_{1} \right] = \mathbb{E}\left[ V \right] = 0$$
+-   We can generalise $\alpha_{0}, \alpha_{1}$ to be function of characteristics $X$, but the key is that there exists a **cutoff level of utility** $V$ than ensures no defiers.
+-   Related strand of literature: Marginal Treatment Effects
 
 36:44
