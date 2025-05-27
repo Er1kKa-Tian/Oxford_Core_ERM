@@ -277,6 +277,37 @@ Under those 4 assumptions, Wald estimator identifies **Local Average Treatment E
     D & = \mathbb{1}\left\{ \alpha_{0} + \alpha_{1}Z>V \right\}
     \end{cases}$$and$$Y = (1-D)Y_{0} + DY_{1}, ~ ~ \mathbb{E}\left[ U_{0} \right] = \mathbb{E}\left[ U_{1} \right] = \mathbb{E}\left[ V \right] = 0$$
 -   We can generalise $\alpha_{0}, \alpha_{1}$ to be function of characteristics $X$, but the key is that there exists a **cutoff level of utility** $V$ than ensures no defiers.
--   Related strand of literature: Marginal Treatment Effects
+-   Related strand of literature (proposed alternative to LATE): **Marginal Treatment Effects**
 
-36:44
+### Average Characteristics of Compliers
+
+-   It is possible to learn about the average characteristics of compliers
+-   Example: let $F=1$ of female, 0 if male.
+    -   Then, by Bayes Theorem:$$\mathbb{Pr}\left( F=1|T=c \right) \frac{\mathbb{Pr}\left( T=c|F=1 \right) \mathbb{Pr}\left( F=1 \right) }{\mathbb{Pr}\left( T=c \right) } = \frac{\mathbb{Pr}\left( T=c|F=1 \right) \mathbb{Pr}\left( F=1 \right) }{\mathbb{E}\left[ D|Z=1 \right] - \mathbb{E}\left[ D|Z=0 \right] } $$
+    -   If $Z\statindep F$ (treatment offer independent of gender), then we have:$$\mathbb{Pr}\left( T=c|F=1 \right) = \mathbb{E}\left[ D|Z=1,F=1 \right] - \mathbb{E}\left[ D|Z=0,F=1 \right]  $$
+    -   Combining those, we get the **fraction of compliers who are female**:$$\mathbb{Pr}\left( F=1|t=c \right) = \mathbb{Pr}\left( F=1 \right) \left( \frac{\mathbb{E}\left[ D|Z=1,F=1 \right] -\mathbb{E}\left[ D|Z=0,F=1 \right] }{\mathbb{E}\left[ D|Z=1 \right] - \mathbb{E}\left[ D|Z=0 \right] } \right)  $$
+
+## One-sided Non-Compliance
+
+-   In many cases, we can rule out some types of respondents.
+
+### No Always-takers
+
+-   e.g. randomised encouragement design $\implies$ there is no access to treatment outside experiment $\implies$ there is no always-takers + no defiers
+-   $\implies$ anyone with $D=1$ (treated) must be a complier $\implies$ Wald Estimator identifies TOT/ATT:$$\frac{\mathbb{E}\left[ Y|Z=1 \right] - \mathbb{E}\left[ Y|Z=0 \right] }{\mathbb{E}\left[ D|Z=1 \right] - 0}= \mathbb{E}\left[ Y_{1} - Y_{0}|Y=c \right] =TOT$$
+
+### No Never-takers
+
+-   e.g. Butler Act increased minimum school-leaving age in UK from 14 to 15 in 1947 $\implies$ there will be no never takers + no defiers
+-   $\implies$ anyone with $D=0$ (not treated) is a complier $\implies$ Wald Estimator identifies TUT (ATE on the untreated):$$\frac{\mathbb{E}\left[ Y|Z=1 \right] - \mathbb{E}\left[ Y|Z=0 \right] }{1- \mathbb{E}\left[ D|Z=0 \right] } = \mathbb{E}\left[ Y_{1}- Y_{0}|T=c \right] = \mathbb{E}\left[ Y_{1}-Y_{0}|D=0 \right] = TUT $$ \## Testing Assumptions
+
+### Problem of Over-identifying Restriction Test for Exogeneity
+
+-   Over-identifying restriction test
+-   Problem: if treatment effect is heterogeneous, different IVs identify different LATE!!!
+
+### Testing LATE Assumptions
+
+-   "Existence of Compliers" can be tested -- it is the same as instrument relevance
+-   Other assumptions are also testable! (see original slides)
+    -   e.g. Huber and Mellace 2015
