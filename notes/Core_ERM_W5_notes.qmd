@@ -1,0 +1,69 @@
+---
+title: "Core_ERM_W5_notes"
+format: html
+---
+
+# Week 5 Part 1: Running a Simulation Study
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+library(tidyverse)
+```
+
+## Intro
+
+Steps for running a simulation study:
+
+1.  function for generating data
+
+2.  function for estimating parameters
+
+3.  run for fixed parameters
+
+4.  run over a grid of values
+
+5.  summarise the results
+
+## More on `purrr`
+
+-   References:
+
+    -   [`purrr` cheatsheet](https://github.com/rstudio/cheatsheets/blob/main/purrr.pdf)
+
+    -   [`purrr` tutorial](https://jennybc.github.io/purrr-tutorial/index.html)
+
+    -   [R for Data Science, Chapter 21](https://r4ds.hadley.nz/iteration.html)
+
+    -   [Advanced R Chapter 9](https://adv-r.hadley.nz/functionals.html)
+
+    -   [Functional Programming](https://dcl-prog.stanford.edu/)
+
+    ### Functional
+
+    -   A **functional** is a function that:
+        -   takes another function as input or
+        -   returns another function as its output
+    -   Example: `purrr::map(.x, .f)`:$$\text{map}(x,f) = \text{map}\left( \begin{bmatrix}
+        x_{1} \\
+        x_{2} \\
+        \vdots \\
+        x_{n}
+        \end{bmatrix}, f \right) = \begin{bmatrix}
+        f(x_{1}) \\
+        f(x_{2}) \\
+        \vdots \\
+        f(x_{n})
+        \end{bmatrix} $$
+    -   We can use `map(.x, .f)` to replace `for()` loop
+
+Example:
+
+```{r}
+results <- vector("list", length(x)) # pre-allocate empty list
+
+```
