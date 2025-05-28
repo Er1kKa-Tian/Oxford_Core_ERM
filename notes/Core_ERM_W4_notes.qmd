@@ -220,6 +220,16 @@ Sigma <- matrix(
 chol(Sigma)
 ```
 
+## Use a Package
+
+-   We can use `rmvnorm()` function from `mvtnorm` package:
+
+```{r}
+library(mvtnorm)
+
+var(rmvnorm(n = 100, mean = c(0, 0), sigma = Sigma))
+```
+
 # Week 4 Part 2: Instrumental Variables
 
 ## 2SLS in R
