@@ -1,0 +1,84 @@
+---
+title: "PS3_WeakIV"
+format: pdf
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(mvtnorm)
+```
+
+# Question 1
+
+```{r}
+# generate
+z_fixed <- rnorm(n=100, mean=0, sd=1)
+
+# demean
+z_fixed <- z_fixed - mean(z_fixed)
+
+# rescale
+z_fixed <- z_fixed * sqrt(100 / sum(z_fixed ^ 2))
+```
+
+# Question 2
+
+```{r}
+draw_sim_data <- function(pi, rho) {
+  #generate independent standard normal draws
+  z1 <- rnorm(100)
+  z2 <- rnorm(100)
+  z <- cbind(z1, z2)
+  
+  #assign the var-cov matrix
+  Sigma <- matrix(
+    c(1, 0.5,
+      0.5, 1),
+    2, 2,
+    byrow = TRUE
+  )
+  
+  #decompose the var-cov matrix
+  L <- chol(Sigma)
+  
+  #generate correlated u,v
+  errors <- t(L %*% t(z))
+}
+```
+
+```{r}
+#generate independent standard normal draws
+  z1 <- rnorm(100)
+  z2 <- rnorm(100)
+  z <- cbind(z1, z2)
+  
+  #assign the var-cov matrix
+  Sigma <- matrix(
+    c(1, 0.5,
+      0.5, 1),
+    2, 2,
+    byrow = TRUE
+  )
+  
+  #decompose the var-cov matrix
+  L <- chol(Sigma)
+  
+  #generate correlated u,v
+  errors <- t(L %*% t(z))
+  
+  
+var(errors)
+```
+
+```{r}
+Sigma
+```
+
+```{r}
+L %*% t(L)
+```
+
+```{r}
+var(rmvnorm(100, mean = c(0, 0), sigma = Sigma))
+```
