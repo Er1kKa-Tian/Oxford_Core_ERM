@@ -361,3 +361,99 @@ We can use `expand_grid()` to set up a parameter grid:
 sim_params <- expand_grid(n = 3:5, s_sq = 1:3)
 sim_params
 ```
+
+# Week 5 Part 2: Regression Discontinuity Design
+
+Notes adapted from UCL ECON0021
+
+-   RDD Basic Idea: $D_{i}$ is assigned based on whether some "running variable" $A_{i}$ is above/below a cutoff $c$
+
+## Sharp RD
+
+### Treatment Assignment
+
+-   Treatment $D_{i}$ is a deterministic function of $A_{i}$:$$D_{i}=\begin{cases}
+    1, &if\ A_{i} \geq c \\
+    0, &if\ A_{i}<c
+    \end{cases}$$
+-   Extrapolation: we cannot perform matching on $A_{i}$ because there is *no common support*: only $Y_{1i}$ is observed if $A_{i}\geq c$ and only $Y_{0i}$ is observed if $A_{i}<c$. We need to *extrapolate* potential outcomes' dependence on $A_{i}$ outside of group
+
+### Assumptions
+
+-   **Continuity**: $\mathbb{E}[Y_{1}|A_{i}=a]$ and $\mathbb{E}[Y_{0}|A_{i}=a]$ are *continuous* functions of $a$ at cutoff $c$.
+    -   This *requires*:
+        -   $D_{i}$ jumps at $A_{i}=c$
+        -   All factors determining $Y_{1i}, Y_{0i}$ change continuously around $c$
+        -   **No manipulation** of assignment $A_{i}$ near the cutoff (individuals cannot precisely control $A_{i}$ near the cutoff) $\implies$ the distribution of $A_{i}$ should be continuous at $c$
+    -   This *implies*:
+        -   Variation in treatment $D_{i}$ near the cut-off is random (Conditional Random Assignment / Local RCT)
+            -   Predetermined cahracteristics $X_{i}$ should have the same distribution just to the left/right of the cutoff
+        -   We can use outcomes of individuals just to the left of $c$ as counter-factual for individuals just to the right of $c$
+    -   Check by **McCrary Test**: check continuity of the running variable and other characteristics at the cutoff
+        -   It is not a formal test for the continuity assumption: even if those characteristics are consistent with continuity, they do not imply continuity (there could be unobserved variables that affect $Y_{1i},Y_{0i}$ and jump at the cutoff)
+-   **Binary Treatment**:$$D= \mathbb{1}\left\{ X\geq c \right\} $$
+-   **Running Variable and Clear Cutoff**: $X$ is an observed running variable and $c$ is a *known* threshold. \### Sharp RD Estimand and Treatment Effect
+-   **Sharp RD Estimand**:$$\beta_{SD}=\lim_{\epsilon \downarrow 0} \Big\{ \mathbb{E}[Y_{i}|A_{i}=c+\epsilon]-\mathbb{E}[Y_{i}|A_{i}=c-\epsilon] \Big\}$$
+-   Under continuity assumption, Sharp RD estimand identifies TE as the cutoff $c$:$$\beta_{SD}=\mathbb{E}[Y_{1i}-Y_{0i}|A_{i}=c]$$
+    -   If TE is homogenous, then $\beta_{SD}=ATE=ATT$
+
+### Implementation
+
+-   **Steps**:
+
+1.  Specify 2 regression models for either side of the cutoff:$$\begin{cases}
+    Y_{i}=\alpha_{i}+f_{l}(c-A_{i})+\epsilon_{li}, &if\ A_{i}<c \\
+    Y_{i}=\alpha_{r}+f_{r}(A_{i}-c)+\epsilon_{ri}, &if\ A_{i}\geq c
+    \end{cases}$$where $f_{r}(.),f_{l}(.)$ are some functions with $f_{r}(0)=0,f_{l}(0)=0$
+2.  Estimate $\alpha_{l},\alpha_{r}$
+3.  RD Estimand: $\beta_{RD}=\alpha_{r}-\alpha_{l}$
+
+-   *Key choice*:
+    -   Specification of $f_{r}(.),f_{l}(.)$
+    -   Choice of **bandwidth**: how far away from the cutoff do we use data?
+-   **Regression Specifications**
+    -   **Ideal local randomised experiment**: $Y_{i}\perp A_{i}$ on either side of the cutoff:$$\begin{cases}
+        Y_{i}=\alpha_{i}+\epsilon_{li}, &if\ A_{i}<c \\
+        Y_{i}=\alpha_{r}+\epsilon_{ri}, &if\ A_{i}\geq c
+        \end{cases}$$
+    -   **Smoothly contaminated local randomised experiment**: $Y_{i}$ depends on $A_{i}$ at either side of the cutoff
+        -   We then need to choose a linear slope, quadratic slope,..., or a Non-parametric function
+
+## Fuzzy RD
+
+### Setup
+
+-   Treatment $D_{i}$ is still random given a value of $A_{i}$, but the probability of treatment given $A_{i}$ jumps at cutoff $c$:$$\lim_{\epsilon\downarrow 0} P(D_{i}=1|A_{i}=c+\epsilon )\neq \lim_{\epsilon\downarrow 0} P(D_{i}=1|A_{i}=c-\epsilon )$$
+    -   Sharp RD is a special case of Fuzzy RD where the probability jumps from 0 to 1
+
+#### Estimand
+
+-   **Fuzzy RD Estimand**:$$\beta_{FD}=\frac{\lim_{\epsilon \downarrow 0} \Big\{ \mathbb{E}[Y_{i}|A_{i}=c+\epsilon]-\mathbb{E}[Y_{i}|A_{i}=c-\epsilon] \Big\}}{\lim_{\epsilon \downarrow 0} \Big\{ P[D_{i}=1|A_{i}=c+\epsilon]-P[D_{i}=1|A_{i}=c-\epsilon] \Big\}}$$
+
+#### Fuzzy RD as IV
+
+-   Fuzzy RD can be interpreted as IV near the cutoff
+-   Instrument:$$Z_{i}=\begin{cases}
+    1, &if\ A_{i}\geq c \\
+    0, &if\ A_{i}<c
+    \end{cases}$$
+-   Potential treatment:$$D_{i}=\begin{cases}
+    D_{1i}, &if\ Z_{i}=1 \\
+    D_{0i}, &if\ Z_{i}=0
+    \end{cases}$$
+-   For small $\epsilon>0$, RD estimand can be understood as a Wald estimand, and identifies **LATE**:$$\begin{split}
+    \beta_{FD}&\approx\frac{\mathbb{E}[Y_{i}|A_{i}=c+\epsilon]-\mathbb{E}[Y_{i}|A_{i}=c-\epsilon]}{P[D_{i}=1|A_{i}=c+\epsilon]-P[D_{i}=1|A_{i}=c-\epsilon]}\\
+    &=\frac{\mathbb{E}[Y_{i}|Z_{i}=1]-\mathbb{E}[Y_{i}|Z_{i}=0]}{\mathbb{E}[D_{i}|Z_{i}=1]-\mathbb{E}[D_{i}|Z_{i}=0]}\\
+    &=\mathbb{E}[Y_{1i}-Y_{0i}|D_{1i}>D_{0i}]
+    \end{split}$$
+    -   Interpretation as LATE:
+        -   Local: ATE for people who are
+            -   *At the cutoff* ($A_{i}=c$)
+            -   *Switch to treatment at the cutoff (compliers)*
+                -   Here, compliers are individuals who would not participate if $c$ is just above $A_{i}$, but would participate if $c$ is just below $A_{i}$
+
+## Practical Advice
+
+-   Motivate the validity of design -- why individuals cannot manipulate assignment variable $A_{i}$?
+-   Test validity of design -- check continuity of outcomes, covariates, and density of $A_{i}$ around the cutoff
+-   Show robustness of RD estimates with respect to specification of $f_{r}(.),f_{l}(.)$ and choice of bandwidth
