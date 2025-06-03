@@ -457,3 +457,148 @@ Notes adapted from UCL ECON0021
 -   Motivate the validity of design -- why individuals cannot manipulate assignment variable $A_{i}$?
 -   Test validity of design -- check continuity of outcomes, covariates, and density of $A_{i}$ around the cutoff
 -   Show robustness of RD estimates with respect to specification of $f_{r}(.),f_{l}(.)$ and choice of bandwidth
+
+# Week 5 Part 3: Research Plumbing II
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+## Merging Data
+
+Sample data:
+
+```{r}
+library(tidyverse)
+set.seed(92815)
+
+gradebook <- tibble(
+  student_id = c(192297, 291857, 500286, 449192, 372152, 627561), 
+  name = c('Alice', 'Bob', 'Charlotte', 'Dante', 
+           'Ethelburga', 'Felix'),
+  quiz1 = round(rnorm(6, 65, 15)), quiz2 = round(rnorm(6, 88, 5)),
+  quiz3 = round(rnorm(6, 75, 10)), midterm1 = round(rnorm(6, 75, 10)),
+  midterm2 = round(rnorm(6, 80, 8)), final = round(rnorm(6, 78, 11)))
+
+emails <- tibble(
+  student_id = c(101198, 192297, 372152, 918276, 291857), 
+  email = c('unclejoe@whitehouse.gov', 'alice.liddell@chch.ox.ac.uk',
+            'ethelburga@lyminge.org', 'mzuckerberg@gmail.com',
+            'microsoftbob@hotmail.com'))
+
+```
+
+`left_join()` as an example:
+
+```{r}
+left_join(gradebook, emails)
+```
+
+Others: `right_join()`, `full_join()`, `inner_join()`
+
+## Reshaping Data
+
+### `pivot_longer()`
+
+```{r}
+gradebook_pvt <- gradebook |>
+  pivot_longer(
+    starts_with("quiz"), # cols, using tidyselect here
+    names_to = "quiz", # how to handle column names
+    names_prefix = "quiz", # remove common prefix
+    names_transform = list(quiz = as.numeric), # convert to numeric
+    values_to = "score" # where to store value
+  ) |>
+  select(student_id, name, quiz, score)
+
+gradebook_pvt
+```
+
+Making a plot:
+
+```{r}
+gradebook_pvt |>
+  ggplot(aes(x = quiz, y = score)) +
+  geom_line() + 
+  geom_point() +
+  facet_wrap(~ name) +
+  theme_minimal()
+```
+
+### `pivot_wider()`
+
+```{r}
+gradebook_pvt |>
+  pivot_wider(
+    names_from = quiz, # extract name
+    names_prefix = "quiz", # add prefix
+    values_from = score # get corresponding values
+  )
+```
+
+## Parallel Computing with `furrr`
+
+### Basics
+
+-   **Serial**: one step at a time; **Parallel**: many steps at once
+
+-   A computing problem is called **embarrassingly parallel** if it is really easy to convert from serial to parallel.
+
+    -   Typically: many independent tasks and little or no need to exchange information between the tasks
+
+    -   Leading example: Monte Carlo Simulations
+
+### 2 Common Approaches
+
+-   **2 common approaches**:
+
+    -   Fix parameters -\> spread simulation reps across cores -\> repeat
+
+        -   Suitable only when each sim rep is low
+
+    -   Spread parameters across cores -\> each core runs all steps
+
+        -   Always better than serial
+
+-   Doubling \# of cores generally *doesn’t* halve the run time:
+
+    -   [Amdahl’s Law](https://en.wikipedia.org/wiki/Amdahl%27s_law): only part of your code is parallel.
+
+    -   [Load Balancing](https://en.wikipedia.org/wiki/Load_balancing_(computing)): if a core has less work, it finishes early
+
+    -   Communication overhead, hard/software limitations
+
+### `future` and `furrr`
+
+-   [`future`](https://future.futureverse.org/) provides *asynchronous* evaluation of R expressions:
+
+    -   **multisession:** background R sessions on current machine
+
+    -   **multicore:** forked R processes on current machine
+
+    -   **cluster:** external R sessions on current/ local / remote machines
+
+-   [`furrr`](https://furrr.futureverse.org/index.html) uses `future` to run `purrr` commands in parallel.
+
+    -   Simply prefix `purrr` functions with `future_`
+
+    -   E.g. `future_map()` or `future_pmap()`
+
+### Example
+
+```{r}
+library(tictoc) # timing
+library(furrr)
+```
+
+```{r}
+# sim_params <- expand_grid(n = 3:12, s_sq = 1:10)
+# plan(multisession, workers = 4)
+# set.seed(1066)
+# my_options <- furrr_options(seed = TRUE)
+# tic()
+#sim_results <- future_pmap(sim_params, run_sim, .options = my_options)
+# toc()
+```
