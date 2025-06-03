@@ -15,20 +15,6 @@ rm(list = ls()) # clear variables
 library(tidyverse)
 ```
 
-## Intro
-
-Steps for running a simulation study:
-
-1.  function for generating data
-
-2.  function for estimating parameters
-
-3.  run for fixed parameters
-
-4.  run over a grid of values
-
-5.  summarise the results
-
 ## More on `purrr`
 
 -   References:
@@ -64,6 +50,314 @@ Steps for running a simulation study:
 Example:
 
 ```{r}
-results <- vector("list", length(x)) # pre-allocate empty list
+#results <- vector("list", length(x)) # pre-allocate empty list
+#for (i in seq_along(x)) { #safer than 1:length(x)
+#  results[[i]] <- f(x[[i]]) # x is a list; items could be anything
+#}
+```
 
+### `purrr::map()`
+
+An example for `purrr:map()` :
+
+```{r}
+sum_prod <- function(v) {
+  # return the sum and product of a vector v as named vector
+  c("sum" = sum(v),
+    "prod" = prod(v))
+}
+
+x <- list(c(1, 1, 1),
+          c(1, 2, 3),
+          c(3, 3, 3))
+
+map(x, sum_prod)
+```
+
+If we input a vector, `purrr:map()` will treat it as a list:
+
+```{r}
+map(1:4, \(x) x^2)
+```
+
+### `purrr::map_dfc()` and `purrr:map_dfr()`
+
+`map_dfc()` binds columns and returns a dataframe
+
+Example:
+
+```{r}
+map_dfc(x, sum_prod) # no row names
+```
+
+`map_dfr()` binds rows and returns a dataframe:
+
+```{r}
+map_dfr(x, sum_prod) # column names are preserved
+```
+
+### `map_dbl(.x, .f)` and friends `map_xxx(.x,  .f)`
+
+-   Common features:
+
+    -   `.f` returns a scalar
+
+    -   output an atomic vector with the same length as `.x`
+
+-   `xxx` specifies the type of output:
+
+    -   `map_dbl()` returns a double vector
+
+    -   `map_chr()` returns a character vector
+
+    -   `map_int()` returns an integer vector
+
+    -   `map_lgl()` returns a logical vector
+
+Examples:
+
+```{r}
+map_dbl(1:10, \(x) x^2)
+```
+
+```{r}
+map_int(c(5L, 10L, 13L, 7L), \(x) x %% 3)
+```
+
+```{r}
+map_chr(c("I", "Love", "Ruru"), tolower)
+```
+
+```{r}
+map_lgl(c(TRUE, FALSE, TRUE), \(x) !x)
+```
+
+### Multiple Arguments: `purrr::map2(.x, .y, .f)`
+
+$$\text{map2}\left( \begin{bmatrix}
+x_{1} \\
+x_{2} \\
+\dots \\
+x_{n}
+\end{bmatrix}, \begin{bmatrix}
+y_{1} \\
+y_{2} \\
+\dots \\
+y_{n}
+\end{bmatrix}, f \right) = \begin{bmatrix}
+f(x_{1},y_{1}) \\
+f(x_{2}, y_{2}) \\
+\dots \\
+f(x_{n}, y_{n})
+\end{bmatrix} $$
+
+-   `.x` and `.y` are vectors or lists of the same length
+
+-   `.f` is a function that takes 2 arguments
+
+-   returns a list by default; variants like `map2_dfr()`, `map2_dfc()`, `map2_dbl()` are analogous to `map()`
+
+```{r}
+map2_dbl(6:10, 1:5, \(x, y) x^y)
+```
+
+### Parallel Map: `pmap(.l, .f)`
+
+$$\text{pmap}\left( \begin{bmatrix}
+l_{11} & l_{12} &  \dots  & l_{1r} \\
+\vdots \\
+l_{n1} & l_{n2} & \dots & l_{nr}
+\end{bmatrix}, f \right) = \begin{bmatrix}
+f(l_{11}, l_{12}, \dots, l_{1r}) \\
+\vdots \\
+f(l_{n1}, l_{n2}, \dots, l_{nr})
+\end{bmatrix}$$
+
+-   `.l` is a list of lists or a list of vectors (dataframe)
+
+-   `.f` is a function that takes `r` arguments
+
+-   returns a list by default; variants exist
+
+```{r}
+df <- tibble(col1 = 1:5, col2 = 5:1, col3 = -2:2)
+
+pmap_dbl(df, \(col1, col2, col3) col3 / (col1 + col2) ^ 2) # argument names have to match with df
+```
+
+## Simulations
+
+## General Structure
+
+Steps for running a simulation study:
+
+1.  Write a function to generate simulation data
+
+2.  Write a function to estimate parameters
+
+3.  Run the simulation for fixed parameters. Repeat many times:
+
+    1.  Draw simulation data
+
+    2.  Calculate estimates
+
+4.  Repeat step 3 over a grid range of parameter values.
+
+5.  Store and summarize the results.
+
+## Example of Simulation: Estimate Variance of Normal Distribution
+
+```{r}
+# function to generate sim data
+draw_sim_data <- function(n, s_sq) {
+  rnorm(n, sd = sqrt(s_sq))
+}
+
+# function to estimate parameters
+get_estimates <- function(x) {
+  c("usual" = var(x),
+    "MLE" = mean((x - mean(x))^2))
+}
+
+# run sim for fixed parameters
+set.seed(1145)
+nreps <- 5000
+sim_dataset <- map(1:nreps, \(i) draw_sim_data(n = 5, s_sq = 1))
+sim_estimates <- map_dfr(sim_dataset, get_estimates)
+
+# run sim over parameter grid
+run_sim <- function(n, s_sq, nreps = 5000) {
+  sim_datasets <- map(1:nreps, \(i) draw_sim_data(n, s_sq))
+  map_dfr(sim_datasets, get_estimates)
+}
+set.seed(1693)
+sim_params <- expand_grid(n = 3:5, s_sq = 1:3)
+sim_results <- pmap(sim_params, run_sim)
+
+# summarise results
+get_summary_stats <- function(df) {
+  df |>
+    summarise(ususal_mean = mean(usual),
+              MLE_mean = mean(MLE),
+              usual_var = var(usual),
+              MLE_var = var(MLE))
+}
+
+summary_stats <- sim_results |>
+  map_dfr(get_summary_stats) |>
+  bind_cols(sim_params)
+
+summary_stats
+```
+
+### Design Choices in Simulation Studies
+
+3 common approaches:
+
+-   Generate all datasets first, then calculate estimates
+
+-   Process one dataset at a time
+
+-   Inline everything
+
+#### Generate All Datasets First
+
+```{r}
+draw_sim_data <- function(n, s_sq) { rnorm(n, sd = sqrt(s_sq)) }
+get_estimates <- function(data) { 
+  c('usual' = var(data), 'MLE' = mean((data - mean(data))^2)) 
+}
+
+run_sim <- function(n, s_sq, nreps = 5000) {
+  # Generate all datasets, then calculate estimates
+  sim_datasets <- map(1:nreps, \(i) draw_sim_data(n, s_sq))
+  map_dfr(sim_datasets, get_estimates)
+}
+```
+
+-   Pros:
+
+    -   clearest conceptual separation
+
+    -   easier debugging
+
+    -   can reuse datasets with different estimators
+
+    -   enables parallelisation of separate steps
+
+-   Cons: high memory usage
+
+#### Process One Dataset at a Time
+
+```{r}
+run_single_rep <- function(n, s_sq) {
+  data <- draw_sim_data(n, s_sq)  # Generate one dataset
+  get_estimates(data)             # Calculate estimates immediately
+}
+
+run_sim_memory_efficient <- function(n, s_sq, nreps = 5000) {
+  map_dfr(1:nreps, \(i) run_single_rep(n, s_sq))
+}
+```
+
+-   Pros:
+
+    -   low memory usage
+
+    -   maintain function modularity
+
+    -   good for large datasets
+
+-   Cons:
+
+    -   can't inspect intermediate data
+
+    -   less flexibility for complex designs
+
+#### Inline Everything
+
+```{r}
+run_sim_inline <- function(n, s_sq, nreps = 5000) {
+  map_dfr(1:nreps, function(i) {
+    # Generate data and calculate estimates inline
+    data <- rnorm(n, sd = sqrt(s_sq))
+    c('usual' = var(data), 'MLE' = mean((data - mean(data))^2))
+  })
+}
+```
+
+-   Pros:
+
+    -   simplest code structure
+
+    -   low memery usage
+
+    -   fewer function calls
+
+-   Cons:
+
+    -   no resuable components
+
+    -   harder to test parts separately
+
+    -   less flexible
+
+## Misc
+
+### `Miscpossibly()`
+
+`possibly()` is a function that handles errors gracefully, suppressing errors and storing a designated value in case of failure:
+
+```{r}
+x <- list("YYRR", 3, 4)
+map_dbl(x, possibly(log, NA_real_))
+```
+
+### `tidyr::expand_grid()`
+
+We can use `expand_grid()` to set up a parameter grid:
+
+```{r}
+sim_params <- expand_grid(n = 3:5, s_sq = 1:3)
+sim_params
 ```
