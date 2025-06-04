@@ -1,0 +1,175 @@
+---
+title: "Core_ERM_W6_notes"
+format: html
+---
+
+# Week 6 Part 1: Statistical Inference
+
+## Useful References
+
+-   Selective, critical review of statistical inference as it is commonly practiced.
+-   Further Reading
+    -   [An Introduction to Probability and Inductive Logic](https://solo.bodleian.ox.ac.uk/permalink/f/n28kah/oxfaleph022663431)
+    -   [Sprenger (2016) - Bayesianism vs Frequentism in Statistical Inference](https://ditraglia.com/erm/Sprenger-2016.pdf)
+    -   [Cohen (1994) - The Earth is Round (p \< 0.05)](https://ditraglia.com/erm/Cohen-1994.pdf)
+    -   Further references linked below…
+
+## Common Mistakes
+
+-   **Compare Effects**
+    -   If we have one result significantly different from 0, and another isn't, then that does not imply 2 effects are significantly different from each other.
+    -   To compare effects, we need to compute the standard error of the difference.
+-   **P-value Interpretation**
+    -   We test $H_{0}:$ effect \> 0 against $H_{1}:$ effect $\leq$ 0. The p-value is 1%. This does not imply that "the effect is positive for 99%, zero or negative for 1%."
+    -   It only means, under $H_{0}$, we have 1% chance to observe a more extreme value.
+    -   *P-value represents how the null makes the data more/less likely; not how the data make the null more/less likely!!!*
+
+## The Logic of Hypothesis Testing
+
+### Questions and Approaches
+
+1.  What should I *believe*?
+2.  How should I *act*?
+3.  What counts as *evidence* for my theory?
+
+-   **Bayesian Approach** centers on question of rational belief (1)
+    -   Both (2) and (3) follow under model of rational choice.
+-   **Frequentist Approach** generally uncomfortable with (1).
+    -   Neyman-Pearson: (3) is impossible, statistics is about (2).
+    -   Fisher-Mayo: (2) is limiting, (3) is crucial to science.
+    -   Common practice: weird combo of Fisher/Neyman
+
+### Logic
+
+#### Deductive Logic
+
+-   **Valid Argument:** true premises $\implies$ true conclusions.
+    -   “Valid arguments are risk-free arguments”
+-   **Modus Ponens:** If A, then B. A, therefore B.
+    -   All ravens are black. Mordecai is a raven. Therefore Mordecai is black.
+-   **Modus Tollens:** If A, then B. Not B, therefore not A.
+    -   All ravens are black. Django is purple. Therefore Django is not a raven.
+
+#### Inductive Logic
+
+-   Inductive logic studies risky arguments. A risky argument can be a very good one, and yet its conclusion can be false, even when all the premises are true. Most of our arguments are risky.
+-   Sample to Population
+    -   X is true in my sample. My sample is representative of the population, so X is probably true in the population.
+
+### Fisher's Disjunction
+
+-   I tested $H_{0}$ and obtained a p-value of 0.01.
+-   If $H_{0}$ is true, this should only happen 1% of the time.
+-   Then "Either an exceptionally rare chance has occurred, or the theory $H_{0}$ is not true." – Fisher
+-   Resembles modus tollens but it’s a *risky argument*!
+-   Alternatively: assumptions used to compute p are wrong and nothing rare happened!
+
+### Common Misinterpretation
+
+-   "If $H_{0}$ is true, then this result (statistical significance) would probably not occur. This result has occurred. Then $H_{0}$ is probably not true."
+    -   A logically equivalent argument:
+        -   If a person is an American ($H_{0}$ is true), then he is probably not a member of Congress. (TRUE, RIGHT?) This person is a member of Congress. Therefore, he is probably not an American ($H_{0}$ is probably not true).
+        -   further reading: [Cohan (1994) - The Earth is Round (p\<0.05)](https://ditraglia.com/erm/Cohen-1994.pdf)
+
+### Inferring from An Unlikely Result
+
+-   Inferring from an unlikely result to the presence of a significant effect *presupposes* that the observed result is much more likely under an implicitly conceived alternative than under the null. – [Sprenger (2016)](https://ditraglia.com/erm/Sprenger-2016.pdf)
+    -   A spectacular vindication of the principle that each individual coin spun individually (*he spins one*) is as likely to come down heads as tails and therefore it should cause no surprise each individual time it does. – Rosencrantz & Guildenstern are Dead$$P(HHHHHHHH)= P(TTTTHHTH) = P(HTHTHTHT) = 1/256$$
+
+### What Researchers Really Want
+
+-   *Want to talk about how likely* $H_{0}$ is in the light of data.
+-   Bayesian approach allows this; not so easy for Frequentists
+
+#### Neyman-Pearson Framework
+
+-   Idea
+    -   Inductive logic is an impossible dream: give up!
+    -   Instead: inductive *behavior*
+    -   Use data to decide which of $H_{0}$ and $H_{1}$ to accept and which to reject
+    -   Design a rule so we are likely to reject false and unlikely to reject true hypotheses
+-   Two kinds of errors:
+    -   Type I: rejecting true $H_{0}$
+    -   Type II: failing to accept true $H_{1}$ (reject false $H_{0}$)
+-   Traditionally: fix Type I error rate at $\alpha$ and minimize Type II error rate subject to this constraint.
+-   If $H_{0}$, $H_{1}$ and $\alpha$ are chosen in light of costs/benefits this is simple **decision theoretic approach**
+
+#### Decision Theory
+
+-   "Classical statistics is directed towards the use of sample information … in making inferences about $\theta$ (certain parameters). These classical inferences are for the most part without regard to the use to which they are put. In decision theory, on the other hand, an attempt is made to combine the sample information with other relevant aspects of the problem in order to make the best decision."
+-   Overview
+    -   Need to decide what **action** $a \in A$ to take.
+    -   Unfortunately the **state of nature** $\theta \in  \Theta$ is unknown.
+    -   Incur **loss** $L(\theta, a)$ if state of nature is $\theta$ and we choose $a$.
+    -   Observe data $X$ from a distribution that depends on $\theta$.
+    -   **Decision rule** $\delta(x)$ is a function that tells us which action to take if we observe data $x$.
+    -   Roughly speaking: try to choose a decision rule so that we will minimize the average/expected loss incurred.
+-   **Skepticism**: Fisher thinks Neyman is *missing the point of science*. It’s not generally about solving decision problems, even if such problems do genuinely arise in some areas.
+
+### More Pedestrian Problems
+
+-   Neyman-Pearson approach *sounds* like decision theory, but the way it is used in practice is purely conventional.
+-   $\alpha=0.05$ is totally arbitrary (so is power of 80%)
+-   Type I error assumed “worse” than Type II, but $H_{0}$ is usually chosen purely for mathematical convenience:
+    -   $H_{0}$: This drug to treat terminal cancer has no effect.
+    -   FDA only approves treatment if we reject $H_{0}$.
+    -   Which error is worse for a patient with terminal cancer?
+-   See [Isakov et al (2019) - Is the FDA too conservative or too aggressive?](https://ditraglia.com/erm/Isakov-et-al-2019.pdf) for more discussion.
+
+## Statistical Power
+
+### Size and Power
+
+-   **Size / Significance Level**: probability of rejecting $H_{0}$ given that it is true.
+    -   Also called Type I error rate, significance level
+-   **Power**: probability of rejecting $H_{0}$ given that it is false.
+    -   Power = 1 - (Type II Error rate)
+    -   More precisely: power against a particular alternative
+        -   Given $\alpha$ and a decision rule, if the true parameter value is $\theta \neq\theta_{0}$, what is the probability of rejecting $H_{0}: \theta=\theta_{0}$?
+-   Size is easier since there’s only one way for $H_{0}$ to be true, but infinitely many ways for it to be false!
+
+### Power Calculation
+
+-   Suppose that $\hat{\theta}\sim N(\theta, SE)$ and define:$$T\equiv \frac{\hat{\theta} - \theta_{0}}{SE}, \kappa \equiv \frac{\theta- \theta_{0}}{SE}, c_{p} \equiv \text{qnorm}(1-p)$$
+-   **One-sided Test** of $H_{0}: \theta= \theta_{0}$ against $H_{1}:\theta>\theta_{0}$:$$\mathbb{Pr}\left( T>c_{\alpha} \right) = \mathbb{Pr}\left( Z+\kappa>c_{\alpha} \right) = 1- \text{pnorm}(c_{\alpha}-\kappa)$$
+-   **Two-sided Test** of $H_{0}:\theta = \theta_{0}$ against $H_{1}: \theta \neq\theta_{0}$:$$\mathbb{Pr}\left( \left| T \right| > c_{\frac{\alpha}{2}} \right) = \mathbb{Pr}\left( \left| Z+\kappa \right| >c_{\frac{\alpha}{2}} \right) = \text{pnorm}\left( -c_{\frac{\alpha}{2}}\right) + 1 - \text{pnorm}\left( c_{\frac{\alpha}{2}}-\kappa \right)  $$
+
+### Traditional Approach
+
+-   Choose null $\mu_{0}$, alternative hypothesis, and $\alpha$
+-   Suppose true mean is μμ and population variance is $\sigma^{2}$
+-   How large a sample size do I need to get Power = 80%?
+
+### Minimum Detectable Effect
+
+-   Choose null $\mu_{0}$, alternative hypothesis, and $\alpha$
+-   Suppose true mean is μμ and population variance is $\sigma^{2}$
+-   What is the smallest value of $\mu$ su that Power = 80%?
+-   Base R function `power.t.test()` does both for t-tests.
+
+## Discussions
+
+### Everything is Significant!
+
+-   Implausible that *any* effect in social science is *exactly* zero.
+-   **In large enough samples we will certainly reject the null!**
+-   Advice: prefer confidence intervals, think about magnitudes
+-   **Economic / Practical** rather than Statistical Significance
+
+### The Statistical Significance Filter
+
+-   **Filedrawer Bias**: researchers are less likely to report findings that are not statistically significant.
+-   **Publication Bias**: journals are less likely to publish papers with statistically insignificant results.
+-   [Why Most Published Findings are False](https://ditraglia.com/erm/Ioannidis-2005.pdf).
+
+### Type M and Type S Errors
+
+If your test has *low power and you reject the null*:
+
+-   **Type M Error**
+
+-   The *magnitude* of estimated effect is greatly exaggerated - **Type S Error** - Good chance that the *sign* of estimated effect is wrong.
+
+-   $\implies$ *ALWAYS CHECK THE POWER!*
+
+![](images/clipboard-1344509967.png)
