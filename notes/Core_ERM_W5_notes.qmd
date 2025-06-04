@@ -458,6 +458,48 @@ Notes adapted from UCL ECON0021
 -   Test validity of design -- check continuity of outcomes, covariates, and density of $A_{i}$ around the cutoff
 -   Show robustness of RD estimates with respect to specification of $f_{r}(.),f_{l}(.)$ and choice of bandwidth
 
+## RD in R
+
+```{r}
+#Parameters of the "separate" regressions
+a0 <- 0.3
+a1 <- 0.2
+b0 <- 0.8
+b1 <- -0.3
+
+# Implied parameters of the "joint" regression
+g0 <- a0
+g1 <- b0 - a0
+g2 <- a1
+g3 <- b1 - a1
+
+# Simulation draws
+set.seed(1234)
+n <- 500
+x <- runif(n)
+cutoff <- 0.5
+D <- 1 * (x > cutoff)
+epsilon <- rnorm(n, sd = 0.1)
+y <- g0 + g1 * D + g2 * x + g3 * D * x + epsilon
+```
+
+```{r}
+# Fit linear regression model, centering X around the cutoff
+xtilde <- x - cutoff
+rd <- lm(y ~ D * xtilde)
+library(broom)
+tidy(rd)
+```
+
+```{r}
+#plot
+library(tidyverse)
+ggplot(data.frame(x = x, y = y), aes(x, y, color = factor(D))) +
+geom_point() +
+geom_smooth(method = 'lm', formula = y ~ x) +
+theme(legend.position = 'none') # Get rid of the legend!
+```
+
 # Week 5 Part 3: Research Plumbing II
 
 ```{r}
