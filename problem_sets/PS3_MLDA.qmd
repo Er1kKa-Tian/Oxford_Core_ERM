@@ -1,0 +1,138 @@
+---
+title: "PS3_MLDA"
+format: html
+---
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+library(haven)
+library(tidyverse)
+library(broom)
+```
+
+# Question 1
+
+```{r}
+# load data
+data <- read_dta("https://ditraglia.com/data/mlda.dta")
+```
+
+```{r}
+# construct variables
+data <- data |>
+  mutate(
+    # center at zero
+    agecell_centered  = agecell - 21,
+    # cutoff variable
+    D  = if_else(agecell >= 21, 1, 0)
+  )
+```
+
+Model setup
+
+$$
+\text{all}_i = \alpha + \beta_0 \text{agecell_centered}_i + \beta_1\,R_i   +\beta_2\,(R_i \times \text{agecell_centered}_i) +\epsilon_i
+$$
+
+CATE: ATE on individuals with age exactly 21.
+
+# Question 2
+
+```{r}
+# fit RD model
+rd_linear <- lm(all ~ agecell_centered + D + agecell_centered:D, data = data)
+
+# summary
+summary(rd_linear)
+```
+
+```{r}
+# visualise
+data |>
+  ggplot(aes(agecell, all, color = factor(D))) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ x) +
+  theme(legend.position = 'none')
+```
+
+Interpretation and Inference:
+
+-   Drinking, on average, leads to 7.66 more deaths per 100,000 individuals for individuals at age 21. This is statistically significant at 1% SL.
+
+-   The difference slopes is not statistically significant across the cutoff, making the RD design more credible.
+
+# Question 3
+
+```{r}
+# fit quadratic model
+rd_quad_full <- lm(
+  all ~ (agecell_centered + I(agecell_centered ^ 2)) * D,
+  data = data
+)
+
+# summary
+summary(rd_quad_full)
+```
+
+```{r}
+# visualise
+data |>
+  ggplot(aes(agecell, all, color = factor(D))) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ x ^ 2) +
+  theme(legend.position = 'none')
+```
+
+The result is still significant at 1% SL. Now the estimated CATE is 9.5478 more deaths per 100,000 individuals for individuals at age 21.
+
+# Question 4
+
+```{r}
+# filter
+data_filtered <- data |>
+  filter(agecell >= 20, agecell <= 22)
+```
+
+```{r}
+# fit RD model
+rd_linear <- lm(all ~ agecell_centered + D + agecell_centered:D, data = data_filtered)
+
+# summary
+summary(rd_linear)
+```
+
+```{r}
+# visualise
+data_filtered |>
+  ggplot(aes(agecell, all, color = factor(D))) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ x) +
+  theme(legend.position = 'none')
+```
+
+```{r}
+# fit quadratic model
+rd_quad_full <- lm(
+  all ~ (agecell_centered + I(agecell_centered ^ 2)) * D,
+  data = data_filtered
+)
+
+# summary
+summary(rd_quad_full)
+```
+
+```{r}
+# visualise
+data_filtered |>
+  ggplot(aes(agecell, all, color = factor(D))) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ x ^ 2) +
+  theme(legend.position = 'none')
+```
+
+Now, the corresponding CATE become 9.753 and 9.611 correspondingly. They are still significant at 5% SL. The new estimates are similar to previous ones, adding extra credibility to our result.
