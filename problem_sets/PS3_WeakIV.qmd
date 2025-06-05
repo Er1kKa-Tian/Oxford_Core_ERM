@@ -7,6 +7,9 @@ editor: visual
 ```{r}
 library(tidyverse)
 library(mvtnorm)
+library(AER)
+library(broom)
+library(furrr)
 ```
 
 # Question 1
@@ -26,59 +29,257 @@ z_fixed <- z_fixed * sqrt(100 / sum(z_fixed ^ 2))
 
 ```{r}
 draw_sim_data <- function(pi, rho) {
-  #generate independent standard normal draws
-  z1 <- rnorm(100)
-  z2 <- rnorm(100)
-  z <- cbind(z1, z2)
+  # set N = 100
+  N = 100
   
-  #assign the var-cov matrix
+  # set beta = 0
+  beta = 0
+  
+  # assign the var-cov matrix
   Sigma <- matrix(
-    c(1, 0.5,
-      0.5, 1),
+    c(1, rho,
+      rho, 1),
     2, 2,
     byrow = TRUE
   )
   
-  #decompose the var-cov matrix
-  L <- chol(Sigma)
+  # generate correlated errors
+  errors <- rmvnorm(n = N, mean = c(0, 0), sigma = Sigma)
   
-  #generate correlated u,v
-  errors <- t(L %*% t(z))
+  # generate x
+  x <- pi * z_fixed + errors[,2]
+  
+  # generate y
+  y <- beta * x + errors[,1]
+  
+  # assemble into a tibble
+  sim_data <- tibble(
+    "z" = z_fixed,
+    "x" = x,
+    "y" = y
+  )
+  
+  # return sim_data
+  sim_data
+}
+```
+
+# Question 3
+
+```{r}
+get_iv_stats <- function(dat) {
+  # compute 2SLS estimate of beta
+  est <- cov(dat$z, dat$y) / cov(dat$z, dat$x)
+  
+  # compute residual
+  u_hat <- dat$y - est * dat$x
+  
+  # compute se
+  se <- sqrt(
+    (var(u_hat) * var(dat$z)) /
+      (100 - 1) * (cov(dat$z, dat$x) ^ 2)
+  )
+  
+  # construct output vector
+  output <- c(
+    "est" = est,
+    "se" = se
+  )
+  
+  # return
+  output
+}
+```
+
+# Question 4
+
+```{r}
+# draw sim data
+sim_data_q4 <- draw_sim_data(pi = 1, rho = 0.5)
+
+# estimate use our function
+get_iv_stats(dat = sim_data_q4)
+```
+
+```{r}
+# check using ivreg
+iv_q4 <- ivreg(y ~ x - 1 | z, data = sim_data_q4)
+summary(iv_q4)
+```
+
+There might be some dof adjustment issues with my solution..
+
+# Question 5
+
+```{r}
+# tweak draw_sim_data so it takes conc, rho as inputs
+
+draw_sim_data_q5 <- function(conc, rho) {
+  # set N = 100
+  N = 100
+  
+  # calculate pi
+  pi = sqrt(conc / 100)
+  
+  # set beta = 0
+  beta = 0
+  
+  # assign the var-cov matrix
+  Sigma <- matrix(
+    c(1, rho,
+      rho, 1),
+    2, 2,
+    byrow = TRUE
+  )
+  
+  # generate correlated errors
+  errors <- rmvnorm(n = N, mean = c(0, 0), sigma = Sigma)
+  
+  # generate x
+  x <- pi * z_fixed + errors[,2]
+  
+  # generate y
+  y <- beta * x + errors[,1]
+  
+  # assemble into a tibble
+  sim_data <- tibble(
+    "z" = z_fixed,
+    "x" = x,
+    "y" = y
+  )
+  
+  # return sim_data
+  sim_data
 }
 ```
 
 ```{r}
-#generate independent standard normal draws
-  z1 <- rnorm(100)
-  z2 <- rnorm(100)
-  z <- cbind(z1, z2)
+# single simulation function
+iv_sim_once <- function(conc, rho) {
   
-  #assign the var-cov matrix
-  Sigma <- matrix(
-    c(1, 0.5,
-      0.5, 1),
-    2, 2,
-    byrow = TRUE
+  # draw sim data
+  sim_data <- draw_sim_data_q5(conc = conc, rho = rho)
+  
+  # estimate
+  estimates <- get_iv_stats(sim_data)
+  
+  # return with original conc, rho
+  tibble(
+    conc = conc,
+    rho  = rho,
+    est  = as.numeric(estimates["est"]),
+    se   = as.numeric(estimates["se"])
   )
-  
-  #decompose the var-cov matrix
-  L <- chol(Sigma)
-  
-  #generate correlated u,v
-  errors <- t(L %*% t(z))
-  
-  
-var(errors)
+}
 ```
 
 ```{r}
-Sigma
+replicate_iv_sim <- function(n_reps, conc, rho) {
+  map_dfr(
+    .x = seq_len(n_reps),
+    .f = ~ iv_sim_once(conc, rho)
+  )
+}
 ```
 
 ```{r}
-L %*% t(L)
+replicate_iv_sim(n_reps = 100, conc = 1, rho = 0.5)
+```
+
+# Question 6
+
+```{r}
+# generate grid
+rho_vals  <- c(0.5,  0.9,  0.99)
+conc_vals <- c(0.0,  0.25, 10.0, 100.0)
+
+para_grid <- expand_grid(
+  rho  = rho_vals,
+  conc = conc_vals
+)
+
+# set up future plan
+plan(multisession)
+
+# set a seed
+set.seed(1145)
+
+# parallel simulation
+simulations <- future_pmap_dfr(
+  .l = list(
+    rho = para_grid$rho,
+    conc = para_grid$conc
+  ),
+  .f = \(rho, conc) {
+    # force each worker to attach these packages immediately:
+    library(dplyr)
+    library(purrr)
+    library(mvtnorm)
+    library(AER)
+    
+    replicate_iv_sim(
+      n_reps = 10000,
+      conc = conc,
+      rho = rho
+    )
+  },
+  .options = furrr_options(seed = TRUE)
+)
+```
+
+I don't know why I am still getting warning "'package:dplyr' may not be available when loading". Otherwise seems fine.
+
+```{r}
+# generate median bias
+median_bias <- simulations |>
+  group_by(rho, conc) |>
+  summarize(
+    median_bias = median(est),
+    .groups = "drop"
+  )
+
+median_bias
+```
+
+# Question 7
+
+```{r}
+# filter out extreme values
+simulations_filtered <- simulations |>
+  filter(est >= -5, est <= 5)
+
+# KDE plot
+simulations_filtered |>
+  ggplot(aes(x = est, color = factor(conc))) +
+  geom_density() +
+  facet_wrap(~ rho) +
+  labs(
+    x     = expression(hat(beta)[IV]),
+    y     = "Kernel density",
+    color = expression(mu^2),
+    title = "Sampling distribution of IV estimate"
+  ) +
+  theme_minimal()
 ```
 
 ```{r}
-var(rmvnorm(100, mean = c(0, 0), sigma = Sigma))
+# compute t‐stat and filter extreme values
+simulations_filtered_witht <- simulations |>
+  mutate(t_stat = est / se) |>
+  filter(t_stat >= -5, t_stat <= 5)
+
+# KDE plot
+simulations_filtered_witht |>
+  ggplot(aes(x = t_stat, color = factor(conc))) +
+  geom_density() +
+  facet_wrap(~ rho) +
+  labs(
+    x     = "t-stat",
+    y     = "Kernel density",
+    color = expression(mu^2),
+    title = "Sampling distribution of IV t-statistic"
+  ) +
+  theme_minimal()
 ```
+
+Strong IVs are unbiased while weak IVs are biased.
