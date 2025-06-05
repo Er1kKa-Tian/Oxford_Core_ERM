@@ -1,6 +1,6 @@
 ---
 title: "PS3_MLDA"
-format: html
+format: pdf
 ---
 
 ```{r}
