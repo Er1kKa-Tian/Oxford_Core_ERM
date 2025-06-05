@@ -1,0 +1,193 @@
+---
+title: "PS3_Weber"
+format: pdf
+---
+
+```{r}
+options(crayon.enabled = FALSE) # suppress colorised warnings to be displayed correctly
+gc() # garbage collection
+rm(list = ls()) # clear variables
+```
+
+```{r}
+library(tidyverse)
+library(broom)
+library(modelsummary)
+```
+
+# Question 1
+
+a\. Whether Mas Weber was wrong that Protestant reformation fostered Protestant work ethic and thus higher economic economic development.
+
+b\.
+
+-   Weber's hypothesis: Protestantism values literacy and hard work, and hence positively affects other social economic outcomes.
+
+-   Mechanism: Protestantism -\> literacy -\> economic growth
+
+-   Weber is not wrong in his conclusion. BW just proposed a different causal channel.
+
+c\.
+
+-   Relevance:
+
+$$
+Cov(Z, X) \neq 0
+$$
+
+-   Exogeneity:
+
+$$
+Cov(Z, u) = 0
+$$
+
+Here, relevance means that counties closer to Wittenberg had higher shares of Protestants in 1871; exogeneity means distance to Wittenberg affected literacy only through changing the share of Protestants.
+
+Relevance can be test by estimating the 1st stage projection and inspect the F-stat.
+
+Exogeneity cannot be tested without overidentifying restrictions.
+
+d\.
+
+-   Counties closer to Wittenberg were more exposed to Protestantism since Wittenbery was the geographic center of early Lutheranism.
+
+-   Exogeneity argument: distance to Wittenberg is uncorrelated with six different proxies for pre‐Reformation economic and educational development (free‐imperial and Hanseatic‐city status, urban population density, existence and founding year of universities, monastery density, and pre‐1517 schools). Meanwhile, those 6 proxies can positively predict late 19th century literacy.
+
+# Question 2
+
+## a
+
+```{r}
+data <- read.csv("https://ditraglia.com/data/weber.csv")
+```
+
+```{r}
+ols <- lm(f_rw ~ f_prot, data = data)
+```
+
+## b
+
+```{r}
+modelsummary(
+  list("OLS" = ols)
+)
+```
+
+The results are the same as column 1, table II.
+
+## c
+
+We cannot interpret it causally due to endogeneity problem.
+
+Potential sources: reverse causality (literacy -\> spread of Protestant ideas), omitted variables, measurement error.
+
+Negative selection: poorer agrarian counties with lower initial literacy rate adopted Protestant more often. This will lead to a downward bias of our OLS estimator.
+
+# Question 3
+
+```{r}
+# fit 1st stage
+first_stage <- lm(f_prot ~ kmwittenberg, data = data)
+
+# summary
+summary(first_stage)
+```
+
+The 1st-stage projection shows that distance to Wittenberg has a significant negative effect on Protestant share, and the overall F-stat is 70. This indicates that distance to Wittenberg is a valid instrument.
+
+## b
+
+```{r}
+# estimate reduced form
+reduced_form <- lm(f_rw ~ kmwittenberg, data = data)
+
+# summary
+summary(reduced_form)
+```
+
+Distance to Wittenberg has a significant negative effect on literacy rate.
+
+## c
+
+```{r}
+# estimate full IV
+iv <- ivreg(f_rw ~ f_prot | kmwittenberg, data = data)
+```
+
+## d
+
+```{r}
+summary(iv)
+```
+
+Our IV estimate is 0.42157. Therefore, an all-Protestant county is estimated to have a literacy rate 42% higher than an all-Catholic county.
+
+This is higher than our OLS estimate, indicating that OLS is biased downward.
+
+## e
+
+```{r}
+# manually compute 2SLS
+coef(reduced_form)["kmwittenberg"] / coef(first_stage)["kmwittenberg"]
+```
+
+# Question 4
+
+## a
+
+```{r}
+# estimate full model
+ols_full <- lm(f_rw ~ f_prot + f_young + f_jew + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + gpop + f_miss + f_blind + f_deaf + f_dumb, data = data)
+
+# summary
+summary(ols_full)
+```
+
+The coefficient on `f_prot` is now 0.099. However, we still cannot attach causal interpretation to it as long as there are still possible omitted variables and negative selection.
+
+## b
+
+```{r}
+# fit 1st stage
+first_stage_full <- lm(f_prot ~ kmwittenberg + f_young + f_jew + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + gpop + f_miss + f_blind + f_deaf + f_dumb, data = data)
+
+# summary
+summary(first_stage_full)
+```
+
+The F-stat is now 24.33 — still indicating relevant instruments, but a bit less sound that before.
+
+```{r}
+# estimate full IV
+iv_full <- ivreg(f_rw ~ f_prot + f_young + f_jew + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + gpop + f_miss + f_blind + f_deaf + f_dumb | kmwittenberg + f_young + f_jew + f_fem + f_ortsgeb + f_pruss + hhsize + lnpop + gpop + f_miss + f_blind + f_deaf + f_dumb, data = data)
+
+# summary
+summary(iv_full)
+```
+
+Now the IV estimate becomes 0.1885.
+
+## c
+
+```{r}
+models <- list(
+  "OLS" = ols,
+  "OLS Full" = ols_full,
+  "IV" = iv,
+  "IV Full 1st Stage" = first_stage_full,
+  "IV Full" = iv_full
+)
+
+modelsummary(
+  models,
+  stars = TRUE
+)
+```
+
+The results match corresponding figures in the original paper.
+
+Interpretation: now the IV estimator identifies LATE after controlling for a set of covariates.
+
+## d
+
+With the full set of controls, our OLS estimate is still smaller that 2SLS estimate, which is consistent with the hypothesis of negative selection into Protestantism.
