@@ -13,6 +13,7 @@ rm(list = ls()) # clear variables
 library(tidyverse)
 library(broom)
 library(modelsummary)
+library(AER)
 ```
 
 # Question 1
